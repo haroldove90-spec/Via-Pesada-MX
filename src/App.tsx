@@ -331,31 +331,59 @@ export default function App() {
                     }}
                     loading="lazy"
                     allowFullScreen
-                    src={`https://www.google.com/maps/embed/v1/directions?key=${customApiKey}&origin=Nuevo+Laredo,+Tamaulipas&destination=${encodeURIComponent(activeRoute.queryParam)}`}
+                    src={
+                      customApiKey === 'AIzaSyBeAbgisBE5m8sVSpglnwXKHdoNRHZMG-s'
+                        ? `https://maps.google.com/maps?saddr=Nuevo+Laredo,+Tamaulipas&daddr=${encodeURIComponent(activeRoute.queryParam)}&output=embed`
+                        : `https://www.google.com/maps/embed/v1/directions?key=${customApiKey}&origin=Nuevo+Laredo,+Tamaulipas&destination=${encodeURIComponent(activeRoute.queryParam)}`
+                    }
                   ></iframe>
 
-                  {/* Warning overlay to explain Google API restrictions to developers */}
-                  <div className="absolute top-[164px] inset-x-6 z-10 bg-slate-950/95 border border-amber-400/30 rounded-xl p-3 shadow-2xl text-[10px] pointer-events-auto leading-relaxed text-amber-300 flex items-start gap-2.5 backdrop-blur">
-                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
-                    <div>
-                      <strong className="text-white block font-black mb-0.5">¿Pantalla en blanco con Google Maps?</strong>
-                      <span>Las claves de Google Maps requieren tener habilitadas la <strong>Embed API</strong>, facturación activa y no tener restricciones de referrer.</span>
-                      <div className="mt-2 flex gap-2">
-                        <button 
-                          onClick={() => setMapSource('osm')} 
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2.5 rounded text-[8.5px] uppercase tracking-wider transition-colors"
-                        >
-                          Usar OSM Libre
-                        </button>
-                        <button 
-                          onClick={() => setShowApiKeySettings(true)} 
-                          className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-1 px-2 rounded text-[8.5px] uppercase tracking-wider transition-colors"
-                        >
-                          Cambiar clave API
-                        </button>
+                  {/* Warning overlay or Info overlay depending on API Key mode */}
+                  {customApiKey === 'AIzaSyBeAbgisBE5m8sVSpglnwXKHdoNRHZMG-s' ? (
+                    <div className="absolute top-[164px] inset-x-6 z-10 bg-slate-950/95 border border-indigo-400/30 rounded-xl p-3 shadow-2xl text-[10px] pointer-events-auto leading-relaxed text-indigo-200 flex items-start gap-2.5 backdrop-blur font-sans">
+                      <Sparkles className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5 animate-pulse" />
+                      <div>
+                        <strong className="text-white block font-black mb-0.5">Google Maps Autónomo</strong>
+                        <span>Estamos usando un visor sin clave API para garantizar que veas el mapa interactivo de inmediato sin errores de autorización.</span>
+                        <div className="mt-2 flex gap-2">
+                          <button 
+                            onClick={() => setShowApiKeySettings(true)} 
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2 rounded text-[8.5px] uppercase tracking-wider transition-colors"
+                          >
+                            Modificar Clave API Premium
+                          </button>
+                          <button 
+                            onClick={() => setMapSource('osm')} 
+                            className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-1 px-2 rounded text-[8.5px] uppercase tracking-wider transition-colors"
+                          >
+                            OSM Libre
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="absolute top-[164px] inset-x-6 z-10 bg-slate-950/95 border border-amber-400/30 rounded-xl p-3 shadow-2xl text-[10px] pointer-events-auto leading-relaxed text-amber-300 flex items-start gap-2.5 backdrop-blur font-sans">
+                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
+                      <div>
+                        <strong className="text-white block font-black mb-0.5">Google Maps (API Key de Usuario)</strong>
+                        <span>Utilizando tu clave API. Si se ve en blanco, activa la <strong>Embed API</strong>, facturación y revisa restricciones en la Google Cloud Console.</span>
+                        <div className="mt-2 flex gap-2">
+                          <button 
+                            onClick={() => setMapSource('osm')} 
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2 rounded text-[8.5px] uppercase tracking-wider transition-colors"
+                          >
+                            Usar OSM Libre
+                          </button>
+                          <button 
+                            onClick={() => saveCustomKey('AIzaSyBeAbgisBE5m8sVSpglnwXKHdoNRHZMG-s')} 
+                            className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-1 px-2 rounded text-[8.5px] uppercase tracking-wider transition-colors"
+                          >
+                            Restablecer Modo Autónomo
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
