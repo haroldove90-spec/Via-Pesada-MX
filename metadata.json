@@ -1,6 +1,6 @@
 {
   "name": "Vía Pesada MX",
   "description": "Detector y analizador estructurado de reportes y alertas viales de grupos de WhatsApp para traileros en México.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
