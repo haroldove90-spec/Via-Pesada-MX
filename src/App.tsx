@@ -249,6 +249,50 @@ export default function App() {
     }
   }, []);
 
+  // Real-time high accuracy GPS tracker during active Route Monitored Mode
+  useEffect(() => {
+    let watchId: number | null = null;
+    if (isEnRuta && navigator.geolocation) {
+      // Fetch precise instant location when start button is hit
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          setUserLocation({ lat, lng });
+          setLocationStatus('detected');
+          speakText(`GPS activado. Ubicación detectada en coordenadas: ${lat.toFixed(4)}, ${lng.toFixed(4)}. Calculando ruta óptima con dimensiones pesadas.`);
+        },
+        (error) => {
+          console.warn("Error capturing fresh precise GPS:", error);
+          setLocationStatus('failed');
+          speakText("Aviso de señal satelital: No se pudo obtener la ubicación precisa del dispositivo actual. Utilizando coordenadas de base.");
+        },
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+
+      // Continuously monitor precise physical updates and update the absolute Google Maps map background
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          setLocationStatus('detected');
+        },
+        (error) => {
+          console.warn("Active GPS lock intermittent:", error);
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+      );
+    }
+
+    return () => {
+      if (watchId !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [isEnRuta]);
+
   // Update simulator whenever route changes
   useEffect(() => {
     setSimulatedKmRestantes(activeRoute.kmRestantes);
