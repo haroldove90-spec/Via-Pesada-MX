@@ -90,39 +90,25 @@ export default function CopilotoVoiceDemo({ onBackToMap }: { onBackToMap?: () =>
   };
 
   return (
-    <div id="phone-simulation-mockup" className="relative max-w-[390px] h-[780px] bg-slate-950 rounded-[46px] border-[10px] border-slate-900 shadow-2xl flex flex-col justify-between overflow-hidden mx-auto font-sans p-5 text-white ring-4 ring-indigo-500/10">
+    <div id="phone-simulation-mockup" className="w-full flex-1 bg-slate-950 flex flex-col justify-between font-sans p-4 text-white pb-28">
       
-      {/* PHONE STATUS HEADER & DYNAMIC ISLAND MOCKUP */}
-      <div className="absolute top-0 inset-x-0 h-9 bg-slate-950 flex justify-between items-center px-8 z-30 pointer-events-none">
-        <span className="text-[11px] font-semibold font-mono tracking-tighter text-slate-400">9:41 AM</span>
-        {/* Dynamic Island / Notch */}
-        <div className="h-5 w-24 bg-slate-900 rounded-full border border-slate-800/50 flex items-center justify-center">
-          <div className="w-2 h-2 rounded-full bg-[#101014] mr-2"></div>
-          <div className="w-3.5 h-1 rounded-full bg-indigo-500/40"></div>
-        </div>
-        <div className="flex items-center gap-1.5 text-slate-400 text-xs text-[11px]">
-          <span>LTE</span>
-          <span className="w-5 h-2.5 border border-slate-500 rounded-xs flex items-center p-0.5"><span className="h-full w-4 bg-emerald-400 rounded-2xs"></span></span>
-        </div>
-      </div>
-
       {/* TOP COMPONENT APP BAR */}
-      <div className="mt-6 flex items-center justify-between border-b border-slate-900 pb-3">
+      <div className="mt-2 flex items-center justify-between border-b border-slate-900 pb-3">
         {onBackToMap ? (
           <button 
             onClick={onBackToMap}
-            className="flex items-center gap-1 text-xs text-indigo-400 font-bold hover:text-indigo-300 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-amber-400 font-bold hover:text-amber-300 transition-colors"
           >
-            <ChevronLeft className="w-4 h-4" />
-            <span>Volver</span>
+            <ChevronLeft className="w-4.5 h-4.5" />
+            <span>Volver al Mapa</span>
           </button>
         ) : (
           <span className="text-xs text-slate-500 font-bold font-mono">VÍA_PESADA_OS</span>
         )}
 
-        <div className="flex items-center gap-1 bg-indigo-950/40 px-2.5 py-1 rounded-full border border-indigo-500/20">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></div>
-          <span className="text-[10px] font-bold text-slate-300 font-mono">COPILOTO ACTIVO</span>
+        <div className="flex items-center gap-1.5 bg-indigo-950/40 px-3 py-1 rounded-full border border-indigo-500/20">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
+          <span className="text-[10px] font-bold text-slate-300 font-mono uppercase">Copiloto Activo</span>
         </div>
 
         <button 
