@@ -38,6 +38,13 @@ export interface TruckProfile {
   tipoCarga: 'General' | 'Refrigerada' | 'Hazmat';
 }
 
+interface CheckpointRuta {
+  km: number;
+  instruccion: string;
+  alertaNom: string | null;
+  tipo: 'normal' | 'alerta' | 'peaje' | 'bascula';
+}
+
 interface RutaDestino {
   id: string;
   nombre: string;
@@ -55,6 +62,7 @@ interface RutaDestino {
     tramo: string;
     riesgo: 'Alto' | 'Medio' | 'Bajo';
   };
+  checkpoints: CheckpointRuta[];
 }
 
 const DESTINOS: RutaDestino[] = [
@@ -74,7 +82,14 @@ const DESTINOS: RutaDestino[] = [
       descripcion: "Reportes de asaltos activos de madrugada. Guardia Nacional con presencia intermitente. Se aconseja viajar en convoy pesado.",
       tramo: "San Luis Potosí a Matehuala DF-57",
       riesgo: "Alto"
-    }
+    },
+    checkpoints: [
+      { km: 0, instruccion: "Salida de terminal de origen. Todo el peso bruto y configuraciones validadas acordes a NOM-012.", alertaNom: null, tipo: 'normal' },
+      { km: 120, instruccion: "Paso de Libramiento de Monterrey. Tránsito fluido, monitorear gálibo del puente intermedio de 4.50m.", alertaNom: "Gálibo seguro para 4.25m", tipo: 'normal' },
+      { km: 340, instruccion: "Aproximándose a Matehuala. Tramo con alerta preventiva de asaltos. Mantenga comunicación fija y viaje acoplado.", alertaNom: "Peligro de Seguridad", tipo: 'alerta' },
+      { km: 590, instruccion: "Llegada al punto de control San Luis Potosí. Casetas federales libres de obstáculos.", alertaNom: "Báscula SICT inactiva temporalmente", tipo: 'peaje' },
+      { km: 840, instruccion: "Arribo a caseta de entrada a CDMX. Restricción de doble remolque nocturno activa." , alertaNom: "NOM-012: Restricción CDMX", tipo: 'bascula' }
+    ]
   },
   {
     id: 'mty',
@@ -92,7 +107,13 @@ const DESTINOS: RutaDestino[] = [
       descripcion: "Pavimento mojado por llovizna y visibilidad reducida a menos de 10 metros en zonas altas de la Cuesta de Mamulique.",
       tramo: "Autopista Mty-Laredo KM 65",
       riesgo: "Medio"
-    }
+    },
+    checkpoints: [
+      { km: 0, instruccion: "Salida de terminal Nuevo Laredo. GPS Activo en ruta a Monterrey.", alertaNom: null, tipo: 'normal' },
+      { km: 65, instruccion: "Cuesta de Mamulique. Neblina intensa y llovizna reduciendo visibilidad. Disminuya velocidad y active luces preventivas.", alertaNom: "Freno de Motor Sugerido", tipo: 'alerta' },
+      { km: 150, instruccion: "Caseta Sabinas Hidalgo. Costo $280 pesos para camiones T3-S2-R4. Preparar cobro exacto o TAG.", alertaNom: "Peaje NOM-012 Autorizado", tipo: 'peaje' },
+      { km: 220, instruccion: "Llegada a CEDIS Escobedo, Monterrey. Control de gálibos y báscula privada de descarga aprobados.", alertaNom: "Ingreso Verde", tipo: 'bascula' }
+    ]
   },
   {
     id: 'gdl',
@@ -110,7 +131,14 @@ const DESTINOS: RutaDestino[] = [
       descripcion: "Revisión rigurosa de peso bruto autorizado y NOM-012 en el ingreso al Macrolibramiento de Guadalajara.",
       tramo: "KM 45 del Macrolibramiento GDL",
       riesgo: "Medio"
-    }
+    },
+    checkpoints: [
+      { km: 0, instruccion: "Empieza viaje a Perla Tapatía. Configuración SICT registrada correctamente.", alertaNom: null, tipo: 'normal' },
+      { km: 290, instruccion: "Límites de Zacatecas y San Luis Potosí. Tráfico despejado. Velocidad crucero autorizada de 80 km/h.", alertaNom: "Todo en orden", tipo: 'normal' },
+      { km: 540, instruccion: "Aproximándose a Lagos de Moreno. Incorporación con asfalto irregular y baches en carril derecho.", alertaNom: "Precaución Reducción", tipo: 'alerta' },
+      { km: 670, instruccion: "Ingreso al Macrolibramiento GDL. Operativo activo de báscula federal sintonizado en canal del operador.", alertaNom: "Báscula NOM-012 Activa", tipo: 'bascula' },
+      { km: 710, instruccion: "Llegada a las bodegas de Guadalajara Oriente.", alertaNom: "Viaje Exitoso", tipo: 'normal' }
+    ]
   },
   {
     id: 'ver',
@@ -128,7 +156,14 @@ const DESTINOS: RutaDestino[] = [
       descripcion: "Niebla extremadamente cerrada en el descenso de las cumbres. Operadores activando freno de motor de forma preventiva.",
       tramo: "Autopista Orizaba-Puebla KM 230",
       riesgo: "Alto"
-    }
+    },
+    checkpoints: [
+      { km: 0, instruccion: "Salida del puerto terrestre fronterizo a Veracruz.", alertaNom: null, tipo: 'normal' },
+      { km: 420, instruccion: "Libramiento de Tampico. Vientos racheados laterales. Sujete el volante firmemente con ambas manos.", alertaNom: "Vientos cruzados", tipo: 'alerta' },
+      { km: 780, instruccion: "Tuxpan Caseta. Avance rápido sin demoras.", alertaNom: "Peaje OK", tipo: 'peaje' },
+      { km: 990, instruccion: "Cumbres de Maltrata Cerrada por colisión y neblina. Buscando desvío o esperando apertura. Active freno de motor.", alertaNom: "Accidente - Paro Preventivo", tipo: 'alerta' },
+      { km: 1140, instruccion: "Llegada al recinto portuario de Veracruz.", alertaNom: "Descarga NOM-012 OK", tipo: 'bascula' }
+    ]
   }
 ];
 
@@ -163,6 +198,12 @@ export default function App() {
   const [isEnRuta, setIsEnRuta] = useState(false);
   const [alertDismissed, setAlertDismissed] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
+  
+  // Simulation variables for interactive GPS route
+  const [activeCheckpointIndex, setActiveCheckpointIndex] = useState(0);
+  const [simulatedSpeed, setSimulatedSpeed] = useState(0);
+  const [showLaunchModal, setShowLaunchModal] = useState(false);
+  const [useVoiceSynthesis, setUseVoiceSynthesis] = useState(true);
 
   // Geolocation States
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -230,7 +271,55 @@ export default function App() {
     setSearchQuery(route.nombre);
     setIsDropdownOpen(false);
     setAlertDismissed(false); // Reset alert dismiss state when user changes route
+    setActiveCheckpointIndex(0); // Reset simulation checkpoint
   };
+
+  // Simulación activa de velocidad y telemetría de cabina en ruta activa
+  useEffect(() => {
+    let speedInterval: any;
+    if (isEnRuta) {
+      setSimulatedSpeed(76);
+      speedInterval = setInterval(() => {
+        // Oscilar velocidad entre 72 y 84 km/h de manera realista para tractocamión cargado
+        setSimulatedSpeed(prev => {
+          const change = Math.floor(Math.random() * 5) - 2; // -2 a +2
+          const target = prev + change;
+          return Math.min(Math.max(target, 70), 84);
+        });
+      }, 4000);
+    } else {
+      setSimulatedSpeed(0);
+      setActiveCheckpointIndex(0);
+    }
+
+    return () => {
+      if (speedInterval) clearInterval(speedInterval);
+    };
+  }, [isEnRuta]);
+
+  // Ejecutar locución sintetizada y transcripción de copiloto al pasar de checkpoint
+  useEffect(() => {
+    if (isEnRuta && activeRoute.checkpoints[activeCheckpointIndex]) {
+      const cp = activeRoute.checkpoints[activeCheckpointIndex];
+      const alertSuffix = cp.alertaNom ? `. Alerta reglamentaria: ${cp.alertaNom}` : '';
+      const phrase = `Tramo ${cp.km} km: ${cp.instruccion}${alertSuffix}`;
+      
+      setCopilotoMensaje(phrase);
+
+      // Web Speech Synthesis API
+      if (useVoiceSynthesis && 'speechSynthesis' in window && !isMuted) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(phrase);
+          utterance.lang = 'es-MX';
+          utterance.rate = 0.95; // Ritmo modulado para chofer de carga pesada
+          window.speechSynthesis.speak(utterance);
+        } catch (err) {
+          console.warn("Speech synthesis err:", err);
+        }
+      }
+    }
+  }, [isEnRuta, activeCheckpointIndex, activeRoute, useVoiceSynthesis, isMuted]);
 
   const handleMicToggle = () => {
     setCopilotoActivo(!copilotoActivo);
@@ -454,42 +543,147 @@ export default function App() {
               </div>
             ) : null}
 
-            {/* 3. TRIP STATUS SUMMARY ROW (VERY SMALL AND TRANSLUCENT) */}
-            <div className="absolute bottom-28 inset-x-4 z-20 max-w-sm mx-auto pointer-events-none">
-              <div className="bg-slate-900/90 border border-slate-800/80 px-3 py-2 rounded-xl shadow-xl backdrop-blur flex justify-between items-center gap-2">
-                <div className="flex flex-col">
-                  <span className="text-[7.5px] font-black text-slate-500 font-mono uppercase tracking-widest">Ruta Activa</span>
-                  <span className="text-[11px] font-black text-white truncate max-w-[120px]">
-                    Tlalnepantla ➔ {activeRoute.nombre}
-                  </span>
+            {/* 3. TRIP STATUS SUMMARY ROW o HUD ACTIVO DE CABINA */}
+            <div className="absolute bottom-28 inset-x-4 z-20 max-w-sm mx-auto pointer-events-auto">
+              {!isEnRuta ? (
+                /* PANEL ORDINARIO SIN VIAJE ACTIVO */
+                <div className="pointer-events-none">
+                  <div className="bg-slate-900/90 border border-slate-800/80 px-3 py-2 rounded-xl shadow-xl backdrop-blur flex justify-between items-center gap-2">
+                    <div className="flex flex-col">
+                      <span className="text-[7.5px] font-black text-slate-500 font-mono uppercase tracking-widest">Ruta Activa</span>
+                      <span className="text-[11px] font-black text-white truncate max-w-[120px]">
+                        Tlalnepantla ➔ {activeRoute.nombre}
+                      </span>
+                    </div>
+                    <div className="h-6 w-[1px] bg-slate-800" />
+                    <div className="flex flex-col items-center">
+                      <span className="text-[7.5px] font-bold text-slate-500 font-mono uppercase tracking-widest">Tiempo</span>
+                      <span className="text-xs font-mono font-bold text-amber-400">{activeRoute.eta}</span>
+                    </div>
+                    <div className="h-6 w-[1px] bg-slate-800" />
+                    <div className="flex flex-col items-end">
+                      <span className="text-[7.5px] font-bold text-slate-500 font-mono uppercase tracking-widest">Restante</span>
+                      <span className="text-xs font-mono font-extrabold text-indigo-400">{activeRoute.kmRestantes}</span>
+                    </div>
+                  </div>
+                  
+                  {/* GPS status pill below indices */}
+                  <div className="flex justify-between items-center mt-1.5 px-1.5 text-[8.5px] text-slate-400 font-mono">
+                    <div className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>{locationText}</span>
+                    </div>
+                    <span className="text-amber-400 font-bold bg-slate-950/70 border border-slate-850 px-1.5 rounded">{pDisplay} Max: {truckProfile.alturaMaxima}m</span>
+                  </div>
                 </div>
-                <div className="h-6 w-[1px] bg-slate-800" />
-                <div className="flex flex-col items-center">
-                  <span className="text-[7.5px] font-bold text-slate-500 font-mono uppercase tracking-widest">Tiempo</span>
-                  <span className="text-xs font-mono font-bold text-amber-400">{activeRoute.eta}</span>
+              ) : (
+                /* HUD EN VIVO DE SIMULADOR NAV NOM-012 INTERACTIVO */
+                <div className="bg-slate-950/95 border-2 border-indigo-500/70 rounded-2xl p-3 shadow-2xl backdrop-blur animate-slideUp">
+                  <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-indigo-500/10">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      <span className="text-[9px] font-black font-mono text-emerald-400 uppercase tracking-widest">Viaje Activo • Simulación</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                       <button
+                         type="button"
+                         onClick={() => setUseVoiceSynthesis(!useVoiceSynthesis)}
+                         className={`px-1.5 py-0.5 rounded text-[8px] font-bold font-mono transition-colors ${useVoiceSynthesis ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/20' : 'bg-slate-900 text-slate-500 border border-slate-800'}`}
+                         title={useVoiceSynthesis ? "Apagar locución automática" : "Encender locución automática"}
+                       >
+                         {useVoiceSynthesis ? "🗣️ Voz ON" : "🔇 Voz OFF"}
+                       </button>
+                    </div>
+                  </div>
+
+                  {/* Telemetría Grid */}
+                  <div className="grid grid-cols-3 gap-2 mb-2 pb-2 border-b border-indigo-500/5">
+                    {/* Velocímetro real tractocamión */}
+                    <div className="bg-slate-900/60 p-1.5 rounded-xl border border-slate-850 flex flex-col items-center">
+                      <span className="text-[7px] text-slate-500 font-mono font-bold uppercase tracking-wider">Velocidad</span>
+                      <div className="flex items-baseline gap-0.5 mt-0.5">
+                        <span className="text-base font-black font-mono text-emerald-400 tracking-tighter">{simulatedSpeed}</span>
+                        <span className="text-[8px] text-slate-500 font-bold">km/h</span>
+                      </div>
+                    </div>
+
+                    {/* Km Recorridos / Checkpoint índice */}
+                    <div className="bg-slate-900/60 p-1.5 rounded-xl border border-slate-850 flex flex-col items-center">
+                      <span className="text-[7px] text-slate-500 font-mono font-bold uppercase tracking-wider">Progreso</span>
+                      <div className="flex items-baseline gap-0.5 mt-0.5">
+                        <span className="text-sm font-black font-mono text-indigo-400">
+                          {activeRoute.checkpoints[activeCheckpointIndex]?.km || 0}
+                        </span>
+                        <span className="text-[8px] text-slate-500 font-bold">km</span>
+                      </div>
+                    </div>
+
+                    {/* Indicador de Gálibo de seguridad */}
+                    <div className="bg-slate-900/60 p-1.5 rounded-xl border border-slate-850 flex flex-col items-center">
+                      <span className="text-[7px] text-slate-500 font-mono font-bold uppercase tracking-wider">Gálibo NOM</span>
+                      <div className="flex items-baseline gap-0.5 mt-0.5">
+                        <span className="text-sm font-black font-mono text-amber-400">{truckProfile.alturaMaxima}</span>
+                        <span className="text-[8px] text-slate-500 font-bold">m</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Detalle Checkpoint e instrucción actual */}
+                  <div className="bg-slate-900/90 border border-slate-850 p-2 rounded-xl mb-2.5">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[8px] font-black font-mono text-amber-400 uppercase tracking-widest">
+                        Check {activeCheckpointIndex + 1} de {activeRoute.checkpoints.length}
+                      </span>
+                      {activeRoute.checkpoints[activeCheckpointIndex]?.alertaNom && (
+                        <span className="text-[7.5px] font-black bg-red-950 text-red-500 border border-red-900 px-1.5 py-0.1 rounded uppercase">
+                          ⚠️ {activeRoute.checkpoints[activeCheckpointIndex].alertaNom}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-200 leading-tight">
+                      {activeRoute.checkpoints[activeCheckpointIndex]?.instruccion}
+                    </p>
+                  </div>
+
+                  {/* Controles de Checkpoints */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const prevIdx = activeCheckpointIndex > 0 ? activeCheckpointIndex - 1 : activeRoute.checkpoints.length - 1;
+                        setActiveCheckpointIndex(prevIdx);
+                      }}
+                      className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white rounded-lg text-[9px] font-bold font-mono border border-slate-800 active:scale-95 transition-all text-center flex-1"
+                    >
+                      ◀ Retroceder
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextIdx = activeCheckpointIndex < activeRoute.checkpoints.length - 1 ? activeCheckpointIndex + 1 : 0;
+                        setActiveCheckpointIndex(nextIdx);
+                      }}
+                      className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[9px] font-black font-mono border border-indigo-500/20 active:scale-95 transition-all text-center flex-1"
+                    >
+                      Avanzar Tramo ▶
+                    </button>
+                  </div>
                 </div>
-                <div className="h-6 w-[1px] bg-slate-800" />
-                <div className="flex flex-col items-end">
-                  <span className="text-[7.5px] font-bold text-slate-500 font-mono uppercase tracking-widest">Restante</span>
-                  <span className="text-xs font-mono font-extrabold text-indigo-400">{activeRoute.kmRestantes}</span>
-                </div>
-              </div>
-              
-              {/* GPS status pill below indices */}
-              <div className="flex justify-between items-center mt-1.5 px-1.5 text-[8.5px] text-slate-400 font-mono">
-                <div className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>{locationText}</span>
-                </div>
-                <span className="text-amber-400 font-bold bg-slate-950/70 border border-slate-850 px-1.5 rounded">{pDisplay} Max: {truckProfile.alturaMaxima}m</span>
-              </div>
+              )}
             </div>
 
             {/* 4. MAIN ERGONOMIC ACTION BUTTON - "INICIAR VIAJE" */}
             <div className="absolute bottom-[72px] inset-x-4 z-30 pointer-events-auto max-w-sm mx-auto">
               <button
                 type="button"
-                onClick={() => setIsEnRuta(!isEnRuta)}
+                onClick={() => {
+                  if (isEnRuta) {
+                    setIsEnRuta(false);
+                  } else {
+                    setShowLaunchModal(true);
+                  }
+                }}
                 className={`w-full py-4 px-6 rounded-xl border font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-2xl transition-all duration-300 transform active:scale-95 ${
                   isEnRuta
                     ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-500/40 animate-pulse shadow-rose-900/30'
@@ -775,6 +969,81 @@ export default function App() {
         )}
 
       </main>
+
+      {/* DIÁLOGO SELECCIÓN DE INICIO DE VIAJE */}
+      {showLaunchModal && (
+        <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fadeIn pointer-events-auto">
+          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-emerald-400 via-indigo-500 to-amber-400" />
+            <div className="flex justify-between items-start pb-3 mb-4">
+              <div>
+                <span className="text-[9px] font-black font-mono text-emerald-400 uppercase tracking-widest block mb-0.5">Módulo de Despacho GPS</span>
+                <h3 className="text-sm font-black text-white uppercase tracking-tight">Iniciar Viaje Inteligente</h3>
+              </div>
+              <button 
+                onClick={() => setShowLaunchModal(false)} 
+                className="text-slate-400 hover:text-white p-1 bg-slate-950 rounded-lg hover:bg-slate-850"
+                type="button"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-[10.5px] text-slate-300 leading-relaxed mb-4">
+              Debido a políticas de seguridad móvil, la navegación GPS interactiva directa está optimizada para la app de Google Maps original o para nuestro simulador interno asistido con gálibos NOM-012:
+            </p>
+
+            <div className="space-y-3">
+              {/* Opción 1: Simulación de cabina asistida */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEnRuta(true);
+                  setActiveCheckpointIndex(0);
+                  setShowLaunchModal(false);
+                }}
+                className="w-full text-left bg-slate-950/80 hover:bg-indigo-950/40 p-3.5 rounded-2xl border border-slate-800 hover:border-indigo-500/50 transition-all flex items-start gap-3 cursor-pointer group"
+              >
+                <div className="p-2.5 bg-indigo-600/10 rounded-xl text-indigo-400 group-hover:bg-indigo-600/20">
+                  <Compass className="w-5 h-5 animate-pulse" />
+                </div>
+                <div className="flex-1">
+                  <span className="text-[11.5px] font-extrabold text-white block">1. Asistente Virtual en App (Simulado)</span>
+                  <span className="text-[9.5px] text-slate-400 leading-relaxed block mt-0.5">
+                    Activa telemetría en vivo, velocímetro, voz de copiloto y monitoreo automático de dimensiones/asaltos kilómetro a kilómetro.
+                  </span>
+                </div>
+              </button>
+
+              {/* Opción 2: Google Maps Externo */}
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originCoordString)}&destination=${encodeURIComponent(activeRoute.queryParam)}&travelmode=driving`}
+                onClick={() => setShowLaunchModal(false)}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full text-left bg-slate-950/80 hover:bg-amber-950/20 p-3.5 rounded-2xl border border-slate-800 hover:border-amber-400/40 transition-all flex items-start gap-4 cursor-pointer group"
+              >
+                <div className="p-2.5 bg-amber-400/10 rounded-xl text-amber-400 group-hover:bg-amber-400/20">
+                  <Navigation className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <span className="text-[11.5px] font-extrabold text-white block">2. Lanzar GPS en Google Maps NATIVO</span>
+                  <span className="text-[9.5px] text-slate-400 leading-relaxed block mt-0.5">
+                    Lanza tu ruta en la app nativa de Google Maps de tu teléfono celular para arrancar navegación paso a paso con GPS de conducción real.
+                  </span>
+                </div>
+              </a>
+            </div>
+
+            <div className="mt-4 flex items-center gap-2 bg-slate-950/60 p-2.5 rounded-xl border border-slate-850">
+              <span className="shrink-0 w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[9px] text-slate-400 font-mono">
+                Ruta seleccionada: <span className="text-white font-bold">{activeRoute.rutaFormato}</span> • {activeRoute.kmRestantes}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL CONFIGURACIÓN GOOGLE MAPS API KEY */}
       {showApiKeySettings && (
