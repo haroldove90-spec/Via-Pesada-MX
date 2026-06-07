@@ -430,7 +430,7 @@ export default function App() {
 
         {/* --- MAP TAB FLOATING COMPONENTS --- */}
         {activeTab === 'mapa' && (
-          <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-4 pointer-events-none">
+          <div className="absolute inset-x-0 top-0 bottom-[84px] flex flex-col justify-between p-4 pointer-events-none">
             
             {/* TOP LAYOUT BAR: DESTINATIONS SEARCH & CONTROL RADAR */}
             <div className="w-full flex flex-col gap-2.5 max-w-sm mx-auto pointer-events-auto">
