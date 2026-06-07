@@ -134,7 +134,6 @@ const DESTINOS: RutaDestino[] = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'mapa' | 'copiloto' | 'camion'>('mapa');
-  const [mapSource, setMapSource] = useState<'osm' | 'google' | 'tactical'>('google');
   
   // Custom API key configurations stored in localStorage to persist
   const [customApiKey, setCustomApiKey] = useState(() => {
@@ -277,19 +276,13 @@ export default function App() {
     const originEncoded = encodeURIComponent(originCoordString);
     const destinationEncoded = encodeURIComponent(activeRoute.queryParam);
 
-    if (mapSource === 'google') {
-      if (customApiKey === 'AIzaSyBeAbgisBE5m8sVSpglnwXKHdoNRHZMG-s') {
-        // Embed universal link (fully interactive directions without billing/restrictions errors)
-        return `https://maps.google.com/maps?saddr=${originEncoded}&daddr=${destinationEncoded}&output=embed&z=7`;
-      } else {
-        // Developer client key link
-        return `https://www.google.com/maps/embed/v1/directions?key=${customApiKey}&origin=${originEncoded}&destination=${destinationEncoded}`;
-      }
-    } else if (mapSource === 'osm') {
-      // Free OSM embed format centering Mexico routes
-      return `https://www.openstreetmap.org/export/embed.html?bbox=${activeRoute.bbox}&layer=mapnik&marker=${userLocation?.lat || 19.54},${userLocation?.lng || -99.19}`;
+    if (customApiKey === 'AIzaSyBeAbgisBE5m8sVSpglnwXKHdoNRHZMG-s') {
+      // Embed universal link (fully interactive directions without billing/restrictions errors)
+      return `https://maps.google.com/maps?saddr=${originEncoded}&daddr=${destinationEncoded}&output=embed&z=7`;
+    } else {
+      // Developer client key link
+      return `https://www.google.com/maps/embed/v1/directions?key=${customApiKey}&origin=${originEncoded}&destination=${destinationEncoded}`;
     }
-    return '';
   };
 
   return (
@@ -327,144 +320,33 @@ export default function App() {
         {activeTab === 'mapa' && (
           <div className="absolute inset-0 w-full h-[calc(100vh-125px)] flex flex-col relative overflow-hidden animate-fadeIn">
             
-            {/* FULL MAP BACKGROUND HOVER - OCCUPYING 100% */}
+            {/* FULL MAP BACKGROUND - GOOGLE MAPS INDEPENDENT & INTERACTIVE */}
             <div className="absolute inset-0 w-full h-full z-0 bg-slate-950">
-              {mapSource === 'tactical' ? (
-                /* SOURCE 3: HIGH ENERGY PREMIUM TACTICAL NOM-012 VECTOR RADAR MAP OF MEXICO */
-                <div className="w-full h-full relative flex items-center justify-center p-4 bg-slate-950" id="tactical-radar-container">
-                  {/* Cyber Grid pattern */}
-                  <div className="absolute inset-0 bg-[linear-gradient(to_right,#0c1530_1px,transparent_1px),linear-gradient(to_bottom,#0c1530_1px,transparent_1px)] bg-[size:20px_20px] opacity-40" />
-                  
-                  {/* Radar sweeps animation */}
-                  <div className="absolute w-[220px] h-[220px] rounded-full border border-indigo-500/10 animate-pulse flex items-center justify-center">
-                    <div className="absolute w-[150px] h-[150px] rounded-full border border-indigo-400/5 animate-ping" />
-                    <div className="absolute w-[80px] h-[80px] rounded-full border border-indigo-300/5 text-center" />
-                  </div>
-
-                  <div className="relative z-10 w-full max-w-[325px] bg-slate-900/90 border border-slate-800 rounded-2xl p-4 backdrop-blur shadow-2xl flex flex-col justify-between overflow-hidden">
-                    <div className="flex items-center justify-between border-b border-indigo-500/20 pb-2 mb-2">
-                      <div className="flex items-center gap-1.5">
-                        <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
-                        <span className="text-[8px] font-black font-mono text-slate-300 uppercase tracking-widest">SISTEMA SATELITAL NOM-012</span>
-                      </div>
-                      <span className="text-[7.5px] font-mono text-emerald-400">GPS: ACTIVO</span>
-                    </div>
-
-                    <div className="relative flex items-center justify-center min-h-[150px] overflow-hidden">
-                      <svg viewBox="0 0 100 120" className="w-full h-44 overflow-visible drop-shadow-[0_0_8px_rgba(99,102,241,0.25)]">
-                        <line x1="50" y1="15" x2="48" y2="38" stroke="#3b82f6" strokeWidth="2.5" strokeDasharray="3,1" className="animate-pulse" />
-                        <path d="M 48 38 Q 45 68 52 108" fill="none" stroke={activeRoute.id === 'cdmx' || activeRoute.id === 'mty' ? '#fbbf24' : '#1e293b'} strokeWidth="2.2" strokeDasharray="5,2" />
-                        <path d="M 48 38 Q 25 72 30 98" fill="none" stroke={activeRoute.id === 'gdl' ? '#fbbf24' : '#1e293b'} strokeWidth="2" />
-                        <path d="M 52 108 Q 68 102 85 95" fill="none" stroke={activeRoute.id === 'ver' ? '#fbbf24' : '#1e293b'} strokeWidth="2" />
-
-                        {/* Tlalnepantla GPS Origin / Laredo fallback */}
-                        <circle cx="50" cy="15" r="5" fill="#10b981" />
-                        <text x="50" y="8" textAnchor="middle" fill="#10b981" className="text-[7px] font-black font-mono" dy=".3em">📍 TLALNEPANTLA</text>
-
-                        {/* MonterreyNode */}
-                        <circle cx="48" cy="38" r="4" fill={activeRoute.id === 'mty' ? '#fbbf24' : '#3b82f6'} className="animate-pulse" />
-                        <text x="56" y="39" fill="#94a3b8" className="text-[6px] font-bold font-mono">Monterrey</text>
-
-                        {/* CDMX Node */}
-                        <circle cx="52" cy="108" r="4.5" fill={activeRoute.id === 'cdmx' ? '#fbbf24' : '#475569'} />
-                        <text x="52" y="116" textAnchor="middle" fill="#94a3b8" className="text-[6px] font-bold font-mono">CDMX</text>
-
-                        {/* Veracruz Node */}
-                        <circle cx="85" cy="95" r="3.5" fill={activeRoute.id === 'ver' ? '#fbbf24' : '#475569'} />
-                        <text x="85" y="90" textAnchor="middle" fill="#94a3b8" className="text-[6px] font-bold font-mono">Veracruz</text>
-
-                        {/* Active vehicle indicator */}
-                        {activeRoute.id === 'mty' && (
-                          <g transform="translate(49, 26)">
-                            <circle r="4" fill="#10b981" className="animate-ping" />
-                            <circle r="2.5" fill="#10b981" />
-                          </g>
-                        )}
-                        {activeRoute.id === 'gdl' && (
-                          <g transform="translate(38, 70)">
-                            <circle r="4" fill="#10b981" className="animate-ping" />
-                            <circle r="2.5" fill="#10b981" />
-                          </g>
-                        )}
-                      </svg>                     
-                    </div>
-
-                    <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 text-[8px] font-mono leading-relaxed text-slate-300 mt-2">
-                      <div className="flex justify-between items-center text-slate-400">
-                        <span>ALTURA NOM-012:</span>
-                        <span className="text-emerald-400 font-bold">{truckProfile.alturaMaxima}m OK</span>
-                      </div>
-                      <div className="flex justify-between items-center text-slate-400 mt-0.5">
-                        <span>PESO BRUTO REAL:</span>
-                        <span className="text-amber-400 font-bold">{truckProfile.pesoBruto} TONELADAS</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                /* SOURCE 1 & 2: OSM OR GOOGLE MAPS IFRAMES */
-                <iframe
-                  title="Visor Cartográfico VíaPesada MX"
-                  id="real-map-iframe"
-                  width="100%"
-                  height="100%"
-                  style={{
-                    border: 0,
-                    filter: 'invert(90%) hue-rotate(180deg) brightness(85%) contrast(110%)',
-                  }}
-                  loading="lazy"
-                  src={getMapIframeSrc()}
-                  className="w-full h-full pointer-events-auto"
-                ></iframe>
-              )}
-              {/* Soft overlay gradient to style the map look */}
-              <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-95 z-5" />
+              <iframe
+                title="Visor Cartográfico VíaPesada MX - Google Maps"
+                id="real-map-iframe"
+                width="100%"
+                height="100%"
+                style={{
+                  border: 0,
+                }}
+                loading="lazy"
+                src={getMapIframeSrc()}
+                className="w-full h-full pointer-events-auto select-none"
+                allowFullScreen
+              ></iframe>
+              {/* Subtle visual gradient at the bottom base only (so we can read status rows clearly without blocking the map click vectors) */}
+              <div className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent z-5" />
             </div>
 
             {/* FLOATING ACTION OVERLAYS - MINIMALIST AND STRATEGIC */}
 
-            {/* 1. TOP FLOATING PANEL: SEARCH BAR & MAP TYPE SWITCHER */}
+            {/* 1. TOP FLOATING PANEL: SEARCH BAR & ROUTE DISPATCH NAVIGATION */}
             <div className="absolute top-3 inset-x-4 z-25 pointer-events-auto flex flex-col gap-2 max-w-sm mx-auto">
               
-              {/* PILL CONTROLLER: MAP SOURCE SWITCHER */}
-              <div className="flex bg-slate-900/90 border border-slate-800/80 p-0.5 rounded-xl shadow-lg text-[8.5px] font-bold font-mono">
-                <button
-                  type="button"
-                  onClick={() => setMapSource('google')}
-                  className={`flex-1 py-1.5 rounded-lg text-center transition-all ${
-                    mapSource === 'google' 
-                      ? 'bg-amber-400 text-slate-900 font-black' 
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  🗺️ Google Maps
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMapSource('osm')}
-                  className={`flex-1 py-1.5 rounded-lg text-center transition-all ${
-                    mapSource === 'osm' 
-                      ? 'bg-amber-400 text-slate-900 font-black' 
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  📡 OSM Libre
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMapSource('tactical')}
-                  className={`flex-1 py-1.5 rounded-lg text-center transition-all ${
-                    mapSource === 'tactical' 
-                      ? 'bg-amber-400 text-slate-900 font-black' 
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  🎯 Radar NOM
-                </button>
-              </div>
-
-              {/* ROUTE SEARCH BAR */}
-              <div className="relative">
+              {/* ROUTE SEARCH BAR AREA AND QUICK NAV BANNER */}
+              <div className="flex gap-1.5 items-stretch">
+                <div className="relative flex-1">
                 <div className="flex items-center bg-slate-900/95 border border-slate-800 rounded-xl px-3 py-2 shadow-lg backdrop-blur">
                   <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0 animate-pulse" />
                   <input
@@ -520,7 +402,20 @@ export default function App() {
                   </div>
                 )}
               </div>
+
+              {/* REAL GPS TURN-BY-TURN NAV BUTTON */}
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originCoordString)}&destination=${encodeURIComponent(activeRoute.queryParam)}&travelmode=driving`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 bg-amber-400 hover:bg-amber-500 text-slate-950 px-3.5 rounded-xl shadow-lg border border-amber-400/20 text-xs transition-colors cursor-pointer shrink-0 font-extrabold"
+                title="Abrir navegación real con asistencia GPS detallada en Google Maps"
+              >
+                <Navigation className="w-3.5 h-3.5 shrink-0" />
+                <span className="uppercase text-[9.5px] tracking-wider font-black">GPS Real</span>
+              </a>
             </div>
+          </div>
 
             {/* 2. LIVE HIGHWAY COMPACT ALERTS (NON-OBSTRUCTIVE DISMISSABLE BANNER) */}
             {activeRoute.alertas && !alertDismissed ? (
