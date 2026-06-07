@@ -1,0 +1,6 @@
+{
+  "name": "Road Alert Processor",
+  "description": "Detector y analizador estructurado de reportes y alertas viales de grupos de WhatsApp para traileros en México.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
