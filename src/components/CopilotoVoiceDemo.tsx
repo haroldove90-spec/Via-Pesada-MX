@@ -120,63 +120,63 @@ export default function CopilotoVoiceDemo({ onBackToMap }: { onBackToMap?: () =>
       </div>
 
       {/* CENTRAL AREA: AUDIO PULSING WAVES (GEMINI LIVE FEEL) */}
-      <div className="flex-1 flex flex-col items-center justify-center py-6">
+      <div className="flex-1 flex flex-col items-center justify-center py-3 sm:py-6">
         
         {/* Animated concentric rings */}
-        <div className="relative flex items-center justify-center w-48 h-48 mb-6">
+        <div className="relative flex items-center justify-center w-36 h-36 sm:w-44 sm:h-44 my-auto shrink-0">
           <div className={`absolute inset-0 rounded-full bg-indigo-500/5 border border-indigo-500/10 transition-all duration-1000 ${
-            isListening ? 'animate-ping scale-110' : 'scale-90'
+            isListening ? 'animate-ping scale-105' : 'scale-90'
           }`}></div>
-          <div className={`absolute inset-4 rounded-full bg-purple-500/5 border border-purple-500/10 transition-all duration-700 ${
+          <div className={`absolute inset-3 rounded-full bg-purple-500/5 border border-purple-500/10 transition-all duration-700 ${
             isListening ? 'animate-ping' : 'scale-90'
           }`}></div>
           
           {/* Main glowing orb */}
-          <div className={`w-32 h-32 rounded-full bg-gradient-to-tr from-indigo-950 to-slate-900 border-2 border-indigo-500/40 flex flex-col items-center justify-center shadow-2xl transition-transform ${
+          <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr from-indigo-950 to-slate-900 border-2 border-indigo-500/40 flex flex-col items-center justify-center shadow-2xl transition-transform ${
             isListening ? 'scale-105 shadow-indigo-500/20' : 'scale-100'
           }`}>
-            <Sparkles className={`w-10 h-10 transition-all ${
+            <Sparkles className={`w-8 h-8 transition-all ${
               isListening ? 'text-indigo-400 animate-pulse' : 'text-slate-500'
             }`} />
-            <span className="text-[10px] font-mono tracking-widest text-slate-400 font-bold mt-1.5 uppercase">
-              {isListening ? "Escuchando" : "Modo En Espera"}
+            <span className="text-[9px] font-mono tracking-widest text-slate-400 font-bold mt-1 uppercase">
+              {isListening ? "Escuchando" : "Espera"}
             </span>
           </div>
         </div>
 
         {/* Audio frequency wave visualizer spikes */}
-        <div className="flex items-end justify-center gap-1.5 h-12 w-full px-8">
-          {waveHeight.map((h, i) => (
+        <div className="flex items-end justify-center gap-1.5 h-8 w-full px-8 mt-2 shrink-0">
+          {waveHeight.slice(0, 8).map((h, i) => (
             <div
               key={i}
-              className={`w-1.5 rounded-full transition-all duration-100 ${
+              className={`w-1 rounded-full transition-all duration-100 ${
                 isListening 
                   ? 'bg-gradient-to-t from-indigo-500 to-purple-400' 
                   : 'bg-slate-800'
               }`}
-              style={{ height: isListening ? `${h}px` : '4px' }}
+              style={{ height: isListening ? `${h * 0.7}px` : '4px' }}
             ></div>
           ))}
         </div>
       </div>
 
       {/* CHAT TRANSCRIPTION & DIAOLG TIMELINE */}
-      <div className="h-56 flex flex-col bg-[#0b0e14]/90 border border-slate-900 rounded-3xl p-3 overflow-hidden shadow-inner">
-        <div className="flex items-center gap-1 bg-[#13171f] px-2.5 py-1.5 rounded-xl border border-slate-800 mb-2">
+      <div className="flex-1 min-h-[110px] max-h-[160px] sm:max-h-[220px] flex flex-col bg-[#0b0e14]/90 border border-slate-900 rounded-3xl p-3 overflow-hidden shadow-inner shrink-0">
+        <div className="flex items-center gap-1 bg-[#13171f] px-2.5 py-1 rounded-xl border border-slate-800 mb-2 shrink-0">
           <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">Transcripción del Viaje</span>
+          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider font-mono">Transcripción del Viaje</span>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 scrollbar-thin scrollbar-thumb-slate-900 text-xs">
+        <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin scrollbar-thumb-slate-900 text-[11px]">
           {messages.map((m) => (
             <div key={m.id} className={`flex flex-col ${m.sender === 'chofer' ? 'items-end' : 'items-start'}`}>
               <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider font-mono">
+                <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider font-mono">
                   {m.sender === 'chofer' ? 'Tú (Operador)' : 'VíaPesada IA'}
                 </span>
                 <span className="text-[8px] text-slate-600 font-mono">{m.time}</span>
               </div>
-              <p className={`p-2.5 rounded-2xl max-w-[85%] leading-relaxed ${
+              <p className={`p-2 rounded-xl max-w-[85%] leading-relaxed ${
                 m.sender === 'chofer'
                   ? 'bg-indigo-600/25 text-indigo-100 rounded-tr-none border border-indigo-500/20'
                   : 'bg-slate-900 text-slate-200 rounded-tl-none border border-slate-800'
