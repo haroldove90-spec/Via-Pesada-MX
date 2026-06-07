@@ -26,7 +26,8 @@ import {
   Info,
   Radio,
   Eye,
-  Maximize2
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 
 // Type definitions
@@ -134,6 +135,7 @@ const DESTINOS: RutaDestino[] = [
 export default function App() {
   const [activeTab, setActiveTab] = useState<'mapa' | 'copiloto' | 'camion'>('mapa');
   const [mapSource, setMapSource] = useState<'osm' | 'google' | 'tactical'>('osm');
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
   
   // Custom API key configurations stored in localStorage to persist
   const [customApiKey, setCustomApiKey] = useState(() => {
@@ -260,440 +262,450 @@ export default function App() {
         {activeTab === 'mapa' && (
           <div className="w-full h-full flex-1 flex flex-col relative overflow-hidden animate-fadeIn">
             
-            {/* IN-APP MAP SYSTEM CHANGER BAR */}
-            <div className={`absolute left-3.5 right-3.5 z-40 transition-all pointer-events-auto top-18`}>
-              <div className="flex bg-slate-900/95 backdrop-blur-lg border border-slate-800/60 rounded-xl p-1 shadow-2xl justify-between items-center text-[9px] font-mono leading-none">
-                <button
-                  onClick={() => setMapSource('osm')}
-                  className={`flex-1 py-2 px-1.5 rounded-lg font-bold text-center transition-all ${
-                    mapSource === 'osm' 
-                      ? 'bg-amber-400 text-slate-950 shadow-md font-black' 
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                  }`}
-                >
-                  📡 OSM Libre
-                </button>
-                <div className="h-4 w-[1px] bg-slate-800" />
-                <button
-                  onClick={() => setMapSource('google')}
-                  className={`flex-1 py-2 px-1.5 rounded-lg font-bold text-center transition-all ${
-                    mapSource === 'google' 
-                      ? 'bg-amber-400 text-slate-950 shadow-md font-black' 
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                  }`}
-                >
-                  🗺️ Google Maps
-                </button>
-                <div className="h-4 w-[1px] bg-slate-800" />
-                <button
-                  onClick={() => setMapSource('tactical')}
-                  className={`flex-1 py-2 px-1.5 rounded-lg font-bold text-center transition-all ${
-                    mapSource === 'tactical' 
-                      ? 'bg-amber-400 text-slate-950 shadow-md font-black' 
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                  }`}
-                >
-                  🎯 Radar NOM-012
-                </button>
-              </div>
-            </div>
-
-            {/* MAP RENDERING SECTION BASED ON SELECTOR */}
-            <div className="absolute inset-0 w-full h-full z-0 overflow-hidden bg-slate-950">
+            {/* MAP CONTAINER (TOP PORTION IN SPLIT MODE, FULL HEIGHT IN EXPANDED MODE) */}
+            <div className={`relative w-full transition-all duration-300 border-b border-slate-900 overflow-hidden bg-slate-950 ${
+              isMapExpanded 
+                ? 'flex-1 h-full' 
+                : 'h-[36vh] xs:h-[40vh] md:h-[45vh] flex-shrink-0'
+            }`}>
               
-              {/* SOURCE 1: OPEN STREET MAPS (100% RELIABLE KEYLESS DIRECTION FLUID MAP) */}
-              {mapSource === 'osm' && (
-                <div className="w-full h-full relative" id="osm-container">
-                  <iframe
-                    title="OpenStreetMap Route Real Viewer"
-                    width="100%"
-                    height="100%"
-                    style={{
-                      border: 0,
-                      filter: 'invert(90%) hue-rotate(180deg) brightness(85%) contrast(110%)',
-                    }}
-                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${activeRoute.bbox}&layer=mapnik&marker=${activeRoute.id === 'mty' ? '25.68,-100.31' : activeRoute.id === 'gdl' ? '20.65,-103.34' : activeRoute.id === 'ver' ? '19.17,-96.13' : '19.43,-99.13'}`}
-                  ></iframe>
-                </div>
-              )}
-
-              {/* SOURCE 2: GOOGLE MAPS EMBED */}
-              {mapSource === 'google' && (
-                <div className="w-full h-full relative" id="google-maps-container">
-                  <iframe
-                    id="real-google-map-iframe"
-                    title="Google Maps Route Viewer"
-                    width="100%"
-                    height="100%"
-                    style={{
-                      border: 0,
-                      filter: 'invert(90%) hue-rotate(180deg) brightness(85%) contrast(110%)',
-                    }}
-                    loading="lazy"
-                    allowFullScreen
-                    src={
-                      customApiKey === 'AIzaSyBeAbgisBE5m8sVSpglnwXKHdoNRHZMG-s'
-                        ? `https://maps.google.com/maps?saddr=Nuevo+Laredo,+Tamaulipas&daddr=${encodeURIComponent(activeRoute.queryParam)}&output=embed`
-                        : `https://www.google.com/maps/embed/v1/directions?key=${customApiKey}&origin=Nuevo+Laredo,+Tamaulipas&destination=${encodeURIComponent(activeRoute.queryParam)}`
-                    }
-                  ></iframe>
-
-                  {/* Warning overlay or Info overlay depending on API Key mode */}
-                  {customApiKey === 'AIzaSyBeAbgisBE5m8sVSpglnwXKHdoNRHZMG-s' ? (
-                    <div className="absolute top-[164px] inset-x-6 z-10 bg-slate-950/95 border border-indigo-400/30 rounded-xl p-3 shadow-2xl text-[10px] pointer-events-auto leading-relaxed text-indigo-200 flex items-start gap-2.5 backdrop-blur font-sans">
-                      <Sparkles className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5 animate-pulse" />
-                      <div>
-                        <strong className="text-white block font-black mb-0.5">Google Maps Autónomo</strong>
-                        <span>Estamos usando un visor sin clave API para garantizar que veas el mapa interactivo de inmediato sin errores de autorización.</span>
-                        <div className="mt-2 flex gap-2">
-                          <button 
-                            onClick={() => setShowApiKeySettings(true)} 
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2 rounded text-[8.5px] uppercase tracking-wider transition-colors"
-                          >
-                            Modificar Clave API Premium
-                          </button>
-                          <button 
-                            onClick={() => setMapSource('osm')} 
-                            className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-1 px-2 rounded text-[8.5px] uppercase tracking-wider transition-colors"
-                          >
-                            OSM Libre
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="absolute top-[164px] inset-x-6 z-10 bg-slate-950/95 border border-amber-400/30 rounded-xl p-3 shadow-2xl text-[10px] pointer-events-auto leading-relaxed text-amber-300 flex items-start gap-2.5 backdrop-blur font-sans">
-                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
-                      <div>
-                        <strong className="text-white block font-black mb-0.5">Google Maps (API Key de Usuario)</strong>
-                        <span>Utilizando tu clave API. Si se ve en blanco, activa la <strong>Embed API</strong>, facturación y revisa restricciones en la Google Cloud Console.</span>
-                        <div className="mt-2 flex gap-2">
-                          <button 
-                            onClick={() => setMapSource('osm')} 
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2 rounded text-[8.5px] uppercase tracking-wider transition-colors"
-                          >
-                            Usar OSM Libre
-                          </button>
-                          <button 
-                            onClick={() => saveCustomKey('AIzaSyBeAbgisBE5m8sVSpglnwXKHdoNRHZMG-s')} 
-                            className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-1 px-2 rounded text-[8.5px] uppercase tracking-wider transition-colors"
-                          >
-                            Restablecer Modo Autónomo
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* SOURCE 3: HIGH ENERGY PREMIUM TACTICAL NOM-012 VECTOR RADAR MAP OF MEXICO */}
-              {mapSource === 'tactical' && (
-                <div className="w-full h-full relative flex items-center justify-center p-4 bg-slate-950" id="tactical-radar-container">
-                  
-                  {/* Cyber Grid pattern */}
-                  <div className="absolute inset-0 bg-[linear-gradient(to_right,#0a1024_1px,transparent_1px),linear-gradient(to_bottom,#0a1024_1px,transparent_1px)] bg-[size:24px_24px] opacity-60" />
-                  
-                  {/* Radar sweeps animation */}
-                  <div className="absolute w-[240px] h-[240px] rounded-full border border-indigo-500/10 animate-pulse flex items-center justify-center">
-                    <div className="absolute w-[160px] h-[160px] rounded-full border border-indigo-400/5" />
-                    <div className="absolute w-[80px] h-[80px] rounded-full border border-indigo-300/5" />
+              {/* IFRAMES / RADAR FOR VARIOUS MAP SOURCES */}
+              <div className="absolute inset-0 w-full h-full z-0">
+                {/* SOURCE 1: OPEN STREET MAPS */}
+                {mapSource === 'osm' && (
+                  <div className="w-full h-full relative" id="osm-container">
+                    <iframe
+                      title="OpenStreetMap Route Real Viewer"
+                      width="100%"
+                      height="100%"
+                      style={{
+                        border: 0,
+                        filter: 'invert(90%) hue-rotate(180deg) brightness(85%) contrast(110%)',
+                      }}
+                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${activeRoute.bbox}&layer=mapnik&marker=${activeRoute.id === 'mty' ? '25.68,-100.31' : activeRoute.id === 'gdl' ? '20.65,-103.34' : activeRoute.id === 'ver' ? '19.17,-96.13' : '19.43,-99.13'}`}
+                    ></iframe>
                   </div>
+                )}
 
-                  <div className="relative z-10 w-full max-w-[340px] aspect-[4/5] bg-slate-900/60 border border-slate-800/80 rounded-2xl p-3 backdrop-blur shadow-2xl flex flex-col justify-between overflow-hidden">
-                    
-                    {/* Header radar HUD */}
-                    <div className="flex items-center justify-between border-b border-indigo-500/20 pb-2 mb-2">
-                      <div className="flex items-center gap-1">
-                        <Radio className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                        <span className="text-[8px] font-black font-mono text-slate-300 uppercase tracking-widest">SISTEMA SATELITAL S-NOM</span>
+                {/* SOURCE 2: GOOGLE MAPS EMBED */}
+                {mapSource === 'google' && (
+                  <div className="w-full h-full relative font-sans" id="google-maps-container">
+                    <iframe
+                      id="real-google-map-iframe"
+                      title="Google Maps Route Viewer"
+                      width="100%"
+                      height="100%"
+                      style={{
+                        border: 0,
+                        filter: 'invert(90%) hue-rotate(180deg) brightness(85%) contrast(110%)',
+                      }}
+                      loading="lazy"
+                      allowFullScreen
+                      src={
+                        customApiKey === 'AIzaSyBeAbgisBE5m8sVSpglnwXKHdoNRHZMG-s'
+                          ? `https://maps.google.com/maps?saddr=Nuevo+Laredo,+Tamaulipas&daddr=${encodeURIComponent(activeRoute.queryParam)}&output=embed`
+                          : `https://www.google.com/maps/embed/v1/directions?key=${customApiKey}&origin=Nuevo+Laredo,+Tamaulipas&destination=${encodeURIComponent(activeRoute.queryParam)}`
+                      }
+                    ></iframe>
+
+                    {/* Compact notification or API Key settings banner */}
+                    <div className="absolute bottom-2 inset-x-2 z-10 bg-slate-950/95 border border-indigo-400/20 rounded-lg p-2 shadow-xl text-[9px] pointer-events-auto leading-tight text-indigo-200 flex items-center justify-between gap-2 backdrop-blur">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-400 shrink-0 animate-pulse" />
+                        <span className="truncate">
+                          {customApiKey === 'AIzaSyBeAbgisBE5m8sVSpglnwXKHdoNRHZMG-s' 
+                            ? 'Google Maps sin clave (Modo Autónomo)' 
+                            : 'Usando clave API de usuario'}
+                        </span>
                       </div>
-                      <span className="text-[7.5px] font-mono text-amber-400">SCAN: OK</span>
-                    </div>
-
-                    {/* SVG Map of routes */}
-                    <div className="flex-1 relative flex items-center justify-center min-h-[160px]">
-                      <svg viewBox="0 0 100 120" className="w-full h-64 overflow-visible drop-shadow-[0_0_8px_rgba(99,102,241,0.2)]">
-                        {/* Connecting Highway lines */}
-                        {/* Laredo -> Mty (MEX-85D) */}
-                        <line x1="50" y1="10" x2="48" y2="35" stroke="#4f46e5" strokeWidth="2.5" strokeDasharray="3,1" className="animate-pulse" />
-                        
-                        {/* Mty -> Matehuala -> CDMX (MEX-57) */}
-                        <path d="M 48 35 Q 45 65 52 105" fill="none" stroke={activeRoute.id === 'cdmx' || activeRoute.id === 'mty' ? '#fbbf24' : '#1e293b'} strokeWidth="2" strokeDasharray="5,2" />
-                        
-                        {/* Mty -> Guadalajara (MEX-150D) */}
-                        <path d="M 48 35 Q 25 70 30 95" fill="none" stroke={activeRoute.id === 'gdl' ? '#fbbf24' : '#1e293b'} strokeWidth="1.8" />
-                        
-                        {/* CDMX -> Veracruz */}
-                        <path d="M 52 105 Q 68 100 85 92" fill="none" stroke={activeRoute.id === 'ver' ? '#fbbf24' : '#1e293b'} strokeWidth="1.8" />
-
-                        {/* City Nodes */}
-                        {/* Nuevo Laredo (Origin) */}
-                        <circle cx="50" cy="10" r="4.5" fill="#10b981" />
-                        <text x="50" y="5" textAnchor="middle" fill="#10b981" className="text-[6.5px] font-black font-mono" dy=".3em">N. LAREDO (ORIGEN)</text>
-
-                        {/* Monterrey */}
-                        <circle cx="48" cy="35" r="4" fill={activeRoute.id === 'mty' ? '#fbbf24' : '#6366f1'} className="animate-pulse" />
-                        <text x="55" y="36" fill="#fff" className="text-[5.5px] font-bold font-mono">Monterrey</text>
-
-                        {/* Guadalajara */}
-                        <circle cx="30" cy="95" r="3.5" fill={activeRoute.id === 'gdl' ? '#fbbf24' : '#475569'} />
-                        <text x="18" y="96" fill="#94a3b8" className="text-[5.5px] font-bold font-mono">Guadalajara</text>
-
-                        {/* CDMX */}
-                        <circle cx="52" cy="105" r="4.5" fill={activeRoute.id === 'cdmx' ? '#fbbf24' : '#475569'} />
-                        <text x="52" y="113" textAnchor="middle" fill="#94a3b8" className="text-[6px] font-bold font-mono">CDMX</text>
-
-                        {/* Veracruz */}
-                        <circle cx="85" cy="92" r="3.5" fill={activeRoute.id === 'ver' ? '#fbbf24' : '#475569'} />
-                        <text x="85" y="87" textAnchor="middle" fill="#94a3b8" className="text-[5.5px] font-bold font-mono">Veracruz</text>
-
-                        {/* Real-time Truck Marker on Route */}
-                        {activeRoute.id === 'mty' && (
-                          <g transform="translate(49, 22)">
-                            <circle r="3" fill="#10b981" className="animate-ping" />
-                            <circle r="2" fill="#10b981" />
-                          </g>
-                        )}
-                        {activeRoute.id === 'cdmx' && (
-                          <g transform="translate(46.5, 60)">
-                            <circle r="3" fill="#10b981" className="animate-ping" />
-                            <circle r="2" fill="#10b981" />
-                          </g>
-                        )}
-                        {activeRoute.id === 'gdl' && (
-                          <g transform="translate(37, 65)">
-                            <circle r="3" fill="#10b981" className="animate-ping" />
-                            <circle r="2" fill="#10b981" />
-                          </g>
-                        )}
-                        {activeRoute.id === 'ver' && (
-                          <g transform="translate(68, 98)">
-                            <circle r="3" fill="#10b981" className="animate-ping" />
-                            <circle r="2" fill="#10b981" />
-                          </g>
-                        )}
-
-                        {/* Alerts positions */}
-                        <g transform="translate(46.5, 75)">
-                          <path d="M 0,-3 L 3,3 L -3,3 Z" fill="#ef4444" className="animate-bounce" />
-                        </g>
-
-                      </svg>                     
-                    </div>
-
-                    {/* Footer HUD metrics */}
-                    <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800 text-[8.5px] font-mono leading-relaxed text-slate-300 mt-2">
-                      <div className="flex justify-between items-center text-slate-400">
-                        <span>ESTADO DE OPERACIÓN:</span>
-                        <span className="text-emerald-400 font-bold">ACTIVO</span>
-                      </div>
-                      <div className="flex justify-between items-center text-slate-400 mt-0.5">
-                        <span>DETECTOR DE GÁLIBO:</span>
-                        <span className="text-white font-bold">{truckProfile.alturaMaxima} metros</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Gradient layer top and bottom overlay on map */}
-              <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-slate-950 via-transparent to-slate-950/40 z-10" />
-            </div>
-
-            {/* 2. FLOATING SEARCH BAR */}
-            <div className={`absolute inset-x-3.5 z-30 transition-all pointer-events-auto top-28`}>
-              <div className="relative">
-                <div className="flex items-center bg-slate-900/95 backdrop-blur-md border border-slate-800/90 rounded-xl px-3 py-2.5 shadow-2xl ring-1 ring-slate-800/50">
-                  <Search className="w-4.5 h-4.5 text-slate-400 mr-2 shrink-0" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setIsDropdownOpen(true);
-                    }}
-                    onFocus={() => setIsDropdownOpen(true)}
-                    placeholder="Buscar destino..."
-                    className="w-full bg-transparent text-white text-xs placeholder-slate-500 font-sans outline-none font-semibold"
-                  />
-                  {searchQuery && (
-                    <button 
-                      onClick={() => {
-                        setSearchQuery('');
-                        setActiveRoute(DESTINOS[0]);
-                        setCopilotoMensaje(DESTINOS[0].soundMensaje);
-                      }} 
-                      className="p-1 hover:bg-slate-800 rounded-md text-slate-400 hover:text-white transition-colors"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Dropdown suggestions */}
-                {isDropdownOpen && (
-                  <div className="absolute top-12 inset-x-0 bg-slate-900/98 backdrop-blur-md border border-slate-800 rounded-xl shadow-2xl p-1.5 z-40 max-h-48 overflow-y-auto animate-fadeIn">
-                    <div className="text-[9px] text-slate-500 font-bold px-2 py-1 uppercase tracking-wider font-mono">Seleccione su Destino</div>
-                    {filteredDestinos.map((dest) => (
-                      <button
-                        key={dest.id}
-                        onClick={() => handleSelectRoute(dest)}
-                        className="w-full flex items-center gap-2.5 px-2 py-2 hover:bg-indigo-600/30 rounded-lg text-left transition-colors text-xs text-slate-200 cursor-pointer"
-                        type="button"
+                      <button 
+                        onClick={() => setShowApiKeySettings(true)} 
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2 rounded text-[8px] uppercase transition-colors shrink-0"
                       >
-                        <MapPin className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                        <div>
-                          <span className="font-extrabold text-white block">{dest.nombre}</span>
-                          <span className="text-[9px] text-slate-400 font-mono">Ruta Autorizada SICT • {dest.kmRestantes}</span>
-                        </div>
+                        Ajustes API
                       </button>
-                    ))}
-                    {filteredDestinos.length === 0 && (
-                      <div className="text-slate-500 text-[10px] py-3 text-center">Sin resultados</div>
-                    )}
+                    </div>
+                  </div>
+                )}
+
+                {/* SOURCE 3: HIGH ENERGY PREMIUM TACTICAL NOM-012 VECTOR RADAR MAP OF MEXICO */}
+                {mapSource === 'tactical' && (
+                  <div className="w-full h-full relative flex items-center justify-center p-3 bg-slate-950" id="tactical-radar-container">
+                    {/* Cyber Grid pattern */}
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#0a1024_1px,transparent_1px),linear-gradient(to_bottom,#0a1024_1px,transparent_1px)] bg-[size:18px_18px] opacity-40" />
+                    
+                    {/* Radar sweeps animation */}
+                    <div className="absolute w-[180px] h-[180px] rounded-full border border-indigo-500/10 animate-pulse flex items-center justify-center">
+                      <div className="absolute w-[120px] h-[120px] rounded-full border border-indigo-400/5" />
+                      <div className="absolute w-[60px] h-[60px] rounded-full border border-indigo-300/5" />
+                    </div>
+
+                    <div className="relative z-10 w-full max-w-[280px] bg-slate-900/80 border border-slate-800 rounded-xl p-2.5 backdrop-blur shadow-2xl flex flex-col justify-between overflow-hidden">
+                      <div className="flex items-center justify-between border-b border-indigo-500/20 pb-1 mb-1">
+                        <div className="flex items-center gap-1">
+                          <Radio className="w-3 h-3 text-amber-400 animate-pulse" />
+                          <span className="text-[7.5px] font-black font-mono text-slate-300 uppercase tracking-widest">SISTEMA SATELITAL S-NOM</span>
+                        </div>
+                        <span className="text-[7px] font-mono text-amber-400">SCAN: OK</span>
+                      </div>
+
+                      <div className="relative flex items-center justify-center min-h-[120px] h-[16vh] overflow-hidden">
+                        <svg viewBox="0 0 100 120" className="w-full h-full overflow-visible drop-shadow-[0_0_8px_rgba(99,102,241,0.2)]">
+                          <line x1="50" y1="10" x2="48" y2="35" stroke="#4f46e5" strokeWidth="2.5" strokeDasharray="3,1" className="animate-pulse" />
+                          <path d="M 48 35 Q 45 65 52 105" fill="none" stroke={activeRoute.id === 'cdmx' || activeRoute.id === 'mty' ? '#fbbf24' : '#1e293b'} strokeWidth="2" strokeDasharray="5,2" />
+                          <path d="M 48 35 Q 25 70 30 95" fill="none" stroke={activeRoute.id === 'gdl' ? '#fbbf24' : '#1e293b'} strokeWidth="1.8" />
+                          <path d="M 52 105 Q 68 100 85 92" fill="none" stroke={activeRoute.id === 'ver' ? '#fbbf24' : '#1e293b'} strokeWidth="1.8" />
+
+                          <circle cx="50" cy="10" r="4.5" fill="#10b981" />
+                          <text x="50" y="5" textAnchor="middle" fill="#10b981" className="text-[6.5px] font-black font-mono" dy=".3em">N. LAREDO (ORIGEN)</text>
+
+                          <circle cx="48" cy="35" r="4" fill={activeRoute.id === 'mty' ? '#fbbf24' : '#6366f1'} className="animate-pulse" />
+                          <text x="55" y="36" fill="#fff" className="text-[5.5px] font-bold font-mono">Monterrey</text>
+
+                          <circle cx="30" cy="95" r="3.5" fill={activeRoute.id === 'gdl' ? '#fbbf24' : '#475569'} />
+                          <text x="18" y="96" fill="#94a3b8" className="text-[5.5px] font-bold font-mono">Guadalajara</text>
+
+                          <circle cx="52" cy="105" r="4.5" fill={activeRoute.id === 'cdmx' ? '#fbbf24' : '#475569'} />
+                          <text x="52" y="113" textAnchor="middle" fill="#94a3b8" className="text-[6px] font-bold font-mono">CDMX</text>
+
+                          <circle cx="85" cy="92" r="3.5" fill={activeRoute.id === 'ver' ? '#fbbf24' : '#475569'} />
+                          <text x="85" y="87" textAnchor="middle" fill="#94a3b8" className="text-[5.5px] font-bold font-mono">Veracruz</text>
+
+                          {activeRoute.id === 'mty' && (
+                            <g transform="translate(49, 22)">
+                              <circle r="3" fill="#10b981" className="animate-ping" />
+                              <circle r="2" fill="#10b981" />
+                            </g>
+                          )}
+                          {activeRoute.id === 'cdmx' && (
+                            <g transform="translate(46.5, 60)">
+                              <circle r="3" fill="#10b981" className="animate-ping" />
+                              <circle r="2" fill="#10b981" />
+                            </g>
+                          )}
+                          {activeRoute.id === 'gdl' && (
+                            <g transform="translate(37, 65)">
+                              <circle r="3" fill="#10b981" className="animate-ping" />
+                              <circle r="2" fill="#10b981" />
+                            </g>
+                          )}
+                          {activeRoute.id === 'ver' && (
+                            <g transform="translate(68, 98)">
+                              <circle r="3" fill="#10b981" className="animate-ping" />
+                              <circle r="2" fill="#10b981" />
+                            </g>
+                          )}
+
+                          <g transform="translate(46.5, 75)">
+                            <path d="M 0,-3 L 3,3 L -3,3 Z" fill="#ef4444" className="animate-bounce" />
+                          </g>
+                        </svg>                     
+                      </div>
+
+                      <div className="bg-slate-950/80 p-1.5 rounded-lg border border-slate-800 text-[7.5px] font-mono leading-relaxed text-slate-300 mt-1">
+                        <div className="flex justify-between items-center text-slate-400">
+                          <span>OPERACIÓN NOM-012:</span>
+                          <span className="text-emerald-400 font-bold">CALCULADO</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* 3. TRIP INFORMATION DRAWER (OVERLAY ON MAP) */}
-            <div className={`absolute inset-x-3.5 z-20 pointer-events-auto top-43`}>
-              <div className="bg-slate-900/95 backdrop-blur-md border border-slate-800/80 rounded-2xl p-3 shadow-2xl">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
-                      <Navigation className="w-4.5 h-4.5 animate-pulse" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[8px] uppercase font-bold tracking-wider text-slate-400 font-mono">Origen: N. Laredo</span>
-                        <span className="text-[8px] bg-indigo-500/20 text-indigo-300 font-mono font-bold px-1.5 py-0.2 rounded">ACTIVO</span>
-                      </div>
-                      <h2 className="text-xs sm:text-xs font-black text-white mt-0.5">
-                        {activeRoute.rutaFormato}
-                      </h2>
-                    </div>
-                  </div>
+              {/* Gradient layer overlay edges */}
+              <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10" />
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="flex flex-col items-end bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-800">
-                      <span className="text-[7.5px] uppercase font-bold tracking-wider text-slate-500 font-mono">Casetas CAPUFE</span>
-                      <strong className="text-[10px] font-mono text-amber-400">{activeRoute.casetas}</strong>
-                    </div>
-
-                    <button 
-                      onClick={() => setIsMuted(!isMuted)}
-                      className="p-1.5 bg-slate-950/85 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg border border-slate-800 transition-colors"
-                      title="Silenciar alertas"
-                      type="button"
+              {/* FLOATING ACTION OVERLAYS - MINIMALIST AND CLEAN */}
+              
+              {/* MAP SOURCE SELECTOR (FLOATED TOP LEFT ONLY WHEN EXPANDED, OTHERWISE LISTED BELOW) */}
+              {isMapExpanded && (
+                <div className="absolute top-2 left-2 z-30 pointer-events-auto">
+                  <div className="flex bg-slate-900/90 backdrop-blur border border-slate-800/80 rounded-lg p-0.5 shadow-lg text-[8px] font-mono gap-0.5">
+                    <button
+                      onClick={() => setMapSource('osm')}
+                      className={`px-2 py-1 rounded font-bold transition-all ${
+                        mapSource === 'osm' ? 'bg-amber-400 text-slate-950 font-black' : 'text-slate-400 hover:text-white'
+                      }`}
                     >
-                      {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                      OSM
+                    </button>
+                    <button
+                      onClick={() => setMapSource('google')}
+                      className={`px-2 py-1 rounded font-bold transition-all ${
+                        mapSource === 'google' ? 'bg-amber-400 text-slate-950 font-black' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Google
+                    </button>
+                    <button
+                      onClick={() => setMapSource('tactical')}
+                      className={`px-2 py-1 rounded font-bold transition-all ${
+                        mapSource === 'tactical' ? 'bg-amber-400 text-slate-950 font-black' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Radar
                     </button>
                   </div>
                 </div>
+              )}
 
-                {/* DYNAMIC REGISTERED TRUCK PROFILE ADAPTIVE BANNER */}
-                <div className="mt-2 pt-2 border-t border-slate-800/60 text-[8.5px] text-amber-400 font-mono font-bold flex items-center justify-between bg-slate-950/40 px-2 py-1.5 rounded-lg border border-slate-800/30">
-                  <div className="flex items-center gap-1.5">
-                    <Truck className="w-3 h-3 text-amber-400" />
-                    <span>Perfil Activo: {pDisplay}</span>
+              {/* MAP EXPAND / RESTORE BUTTON (CORNER TOP-RIGHT) */}
+              <div className="absolute top-2 right-2 z-30 pointer-events-auto flex gap-2">
+                <button
+                  onClick={() => setIsMapExpanded(!isMapExpanded)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900/95 border border-slate-850 hover:bg-slate-800 text-slate-200 hover:text-white font-mono text-[9px] font-bold rounded-lg shadow-xl backdrop-blur transition-all active:scale-95 whitespace-nowrap"
+                  title={isMapExpanded ? "Restablecer vista dividida" : "Ver mapa completo"}
+                >
+                  {isMapExpanded ? (
+                    <>
+                      <Minimize2 className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Ver Detalles</span>
+                    </>
+                  ) : (
+                    <>
+                      <Maximize2 className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                      <span>Ver Mapa Limpio</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* FLOATING MIC BUTTON OVER MAP (BOTTOM RIGHT) */}
+              <div className="absolute bottom-3 right-3 z-35 pointer-events-auto">
+                <button 
+                  onClick={handleMicToggle}
+                  className={`p-3 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-90 ${
+                    copilotoActivo 
+                      ? 'bg-red-600 text-white animate-pulse' 
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20'
+                  }`}
+                  title="Copiloto de Voz"
+                >
+                  {copilotoActivo ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </button>
+              </div>
+
+              {/* OVERLAY ETA DISPLAY ON EXPANDED MODE (SO WE DON'T LOSE KEY DETAILS) */}
+              {isMapExpanded && (
+                <div className="absolute bottom-3 left-3 z-30 pointer-events-none">
+                  <div className="bg-slate-900/90 border border-slate-800/80 px-2.5 py-1.5 rounded-lg shadow-xl backdrop-blur flex items-center gap-3 text-[10px] text-slate-300 font-mono">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-amber-400" />
+                      <span className="font-extrabold text-white">{activeRoute.eta}</span>
+                    </div>
+                    <div className="h-2.5 w-[1px] bg-slate-800" />
+                    <div>
+                      <span className="text-slate-400">{activeRoute.kmRestantes}</span>
+                    </div>
                   </div>
-                  <span>Evitando puentes menores a {truckProfile.alturaMaxima}m</span>
                 </div>
-              </div>
+              )}
             </div>
 
-            {/* 4. DYNAMIC HIGHWAY ALERT BANNER */}
-            <div className="absolute bottom-[164px] inset-x-3.5 z-20 pointer-events-auto animate-slideUp">
-              <div className="bg-slate-900/95 backdrop-blur-md border border-slate-800/95 rounded-2xl p-3 shadow-xl">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className={`text-[8.5px] font-extrabold px-2 py-0.5 rounded-full uppercase ${
-                    activeRoute.alertas.tipo === 'seguridad' ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
-                    activeRoute.alertas.tipo === 'reten' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 
-                    'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  }`}>
-                    {activeRoute.alertas.tipo === 'seguridad' ? '🚨 Seguridad' : activeRoute.alertas.tipo === 'reten' ? '👮 Báscula' : '⚠️ Alerta Vial'} • Riesgo {activeRoute.alertas.riesgo}
-                  </span>
-                  <span className="text-[9px] text-slate-400 font-mono truncate max-w-[170px]">{activeRoute.alertas.tramo}</span>
+            {/* CONTROL PANEL & ROUTE CARDS (ONLY VISIBLE IN SPLIT-SCREEN MODE - STATIC STREAM LAYOUT) */}
+            {!isMapExpanded ? (
+              <div className="flex-1 w-full overflow-y-auto p-4 pb-28 space-y-3.5 bg-slate-950 font-sans" id="route-panel-container">
+                
+                {/* 1. SEAMLESS IN-FLIGHT MAP SOURCE CHANGER PILLS */}
+                <div className="bg-slate-900 border border-slate-850/80 rounded-xl p-1 flex justify-between items-center text-[9px] font-mono leading-none">
+                  <button
+                    onClick={() => setMapSource('osm')}
+                    className={`flex-1 py-1.5 px-1 rounded-lg font-bold text-center transition-all ${
+                      mapSource === 'osm' 
+                        ? 'bg-indigo-600 text-white font-black' 
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                    }`}
+                  >
+                    📡 OSM Libre
+                  </button>
+                  <div className="h-3 w-[1px] bg-slate-800" />
+                  <button
+                    onClick={() => setMapSource('google')}
+                    className={`flex-1 py-1.5 px-1 rounded-lg font-bold text-center transition-all ${
+                      mapSource === 'google' 
+                        ? 'bg-indigo-600 text-white font-black' 
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                    }`}
+                  >
+                    🗺️ Google Maps
+                  </button>
+                  <div className="h-3 w-[1px] bg-slate-800" />
+                  <button
+                    onClick={() => setMapSource('tactical')}
+                    className={`flex-1 py-1.5 px-1 rounded-lg font-bold text-center transition-all ${
+                      mapSource === 'tactical' 
+                        ? 'bg-indigo-600 text-white font-black' 
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                    }`}
+                  >
+                    🎯 Radar NOM-012
+                  </button>
                 </div>
-                <h4 className="font-extrabold text-white text-xs">{activeRoute.alertas.titulo}</h4>
-                <p className="text-[10px] text-slate-300 mt-1 leading-relaxed bg-slate-950/60 p-2 border border-slate-800/60 rounded-xl">
-                  {activeRoute.alertas.descripcion}
-                </p>
-              </div>
-            </div>
 
-            {/* 5. VOICE AI COPILOTO OVERLAY MESSAGES */}
-            {copilotoMensaje && (
-              <div className="absolute right-3.5 bottom-[356px] max-w-[250px] z-20 pointer-events-auto animate-fadeIn">
-                <div className="bg-slate-950/98 backdrop-blur-md border border-indigo-500/40 rounded-xl p-3 shadow-2xl">
-                  <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-indigo-500/10">
-                    <span className="text-[8.5px] font-bold text-indigo-300 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-purple-400 animate-spin" />
-                      Copiloto Inteligente Gemini
+                {/* 2. ROUTE SEARCH / SELECT BAR */}
+                <div className="relative">
+                  <div className="flex items-center bg-slate-900/95 border border-slate-800/80 rounded-xl px-3 py-2.5 shadow-md">
+                    <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setIsDropdownOpen(true);
+                      }}
+                      onFocus={() => setIsDropdownOpen(true)}
+                      placeholder="Buscar destino (ej: Monterrey, CDMX, Guadalajara)..."
+                      className="w-full bg-transparent text-white text-xs placeholder-slate-500 font-sans outline-none font-semibold"
+                    />
+                    {searchQuery && (
+                      <button 
+                        onClick={() => {
+                          setSearchQuery('');
+                          setActiveRoute(DESTINOS[0]);
+                          setCopilotoMensaje(DESTINOS[0].soundMensaje);
+                        }} 
+                        className="p-1 hover:bg-slate-800 rounded-md text-slate-400 hover:text-white transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Dropdown suggestions */}
+                  {isDropdownOpen && (
+                    <div className="absolute top-12 inset-x-0 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-1.5 z-45 max-h-48 overflow-y-auto animate-fadeIn">
+                      <div className="text-[9px] text-slate-500 font-bold px-2 py-1 uppercase tracking-wider font-mono">Seleccione su Destino</div>
+                      {filteredDestinos.map((dest) => (
+                        <button
+                          key={dest.id}
+                          onClick={() => handleSelectRoute(dest)}
+                          className="w-full flex items-center gap-2.5 px-2 py-2 hover:bg-indigo-600/30 rounded-lg text-left transition-colors text-xs text-slate-200 cursor-pointer"
+                          type="button"
+                        >
+                          <MapPin className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                          <div>
+                            <span className="font-extrabold text-white block">{dest.nombre}</span>
+                            <span className="text-[9px] text-slate-400 font-mono">Ruta Autorizada SICT • {dest.kmRestantes}</span>
+                          </div>
+                        </button>
+                      ))}
+                      {filteredDestinos.length === 0 && (
+                        <div className="text-slate-500 text-[10px] py-3 text-center">Sin resultados</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. TRIP INFORMATION & STATUS CARD */}
+                <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-3.5 shadow-md">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2.5 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20 shrink-0">
+                        <Navigation className="w-4 h-4 animate-pulse" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[8px] uppercase font-bold tracking-wider text-slate-400 font-mono">Origen: N. Laredo</span>
+                          <span className="text-[8px] bg-indigo-500/20 text-indigo-300 font-mono font-bold px-1.5 py-0.2 rounded font-black">ACTIVO</span>
+                        </div>
+                        <h2 className="text-xs font-black text-white mt-0.5">
+                          {activeRoute.rutaFormato}
+                        </h2>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex flex-col items-end bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-800">
+                        <span className="text-[7px] uppercase font-bold tracking-widest text-slate-500 font-mono">Casetas CAPUFE</span>
+                        <strong className="text-[10px] font-mono text-amber-400">{activeRoute.casetas}</strong>
+                      </div>
+
+                      <button 
+                        onClick={() => setIsMuted(!isMuted)}
+                        className="p-1.5 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg border border-slate-800 transition-colors"
+                        title="Silenciar Alertas"
+                        type="button"
+                      >
+                        {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ACTIVE TRUCK PROFILE SUMMARY PILL */}
+                  <div className="mt-2.5 pt-2.5 border-t border-slate-800/60 text-[8px] text-amber-400 font-mono font-bold flex items-center justify-between bg-slate-950/40 px-2 py-1.5 rounded-lg border border-slate-800/30">
+                    <div className="flex items-center gap-1.5">
+                      <Truck className="w-3 h-3 text-amber-400" />
+                      <span>Perfil Activo: {pDisplay}</span>
+                    </div>
+                    <span>Evitando puentes menores a {truckProfile.alturaMaxima}m</span>
+                  </div>
+                </div>
+
+                {/* 4. DYNAMIC HIGHWAY ALERT CARD */}
+                <div className="bg-slate-900 border border-slate-800/90 rounded-2xl p-3.5 shadow-md">
+                  <div className="flex items-center gap-2 mb-1.5 border-b border-slate-800 pb-1.5">
+                    <span className={`text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase ${
+                      activeRoute.alertas.tipo === 'seguridad' ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
+                      activeRoute.alertas.tipo === 'reten' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 
+                      'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    }`}>
+                      {activeRoute.alertas.tipo === 'seguridad' ? '🚨 Seguridad' : activeRoute.alertas.tipo === 'reten' ? '👮 Báscula' : '⚠️ Alerta Vial'} • Riesgo {activeRoute.alertas.riesgo}
                     </span>
-                    <button onClick={() => setCopilotoMensaje(null)} className="text-slate-500 hover:text-white" type="button">
-                      <X className="w-3.5 h-3.5" />
-                    </button>
+                    <span className="text-[8px] text-slate-400 font-mono truncate">{activeRoute.alertas.tramo}</span>
                   </div>
-                  <p className="text-[9.5px] text-indigo-50 leading-relaxed italic">
-                    &ldquo;{copilotoMensaje}&rdquo;
+                  <h4 className="font-extrabold text-white text-xs">{activeRoute.alertas.titulo}</h4>
+                  <p className="text-[9.5px] text-slate-300 mt-1 bg-slate-950/60 p-2.5 border border-slate-850 rounded-xl leading-relaxed">
+                    {activeRoute.alertas.descripcion}
                   </p>
                 </div>
+
+                {/* 5. SPLIT-SCREEN COMPACT ETA METRICS HUB */}
+                <div className="bg-slate-900 border border-slate-800/70 p-3 rounded-2xl shadow-md">
+                  <div className="grid grid-cols-3 gap-2.5 text-center">
+                    <div className="bg-slate-950/50 p-2.5 rounded-xl border border-slate-800">
+                      <div className="flex items-center justify-center gap-1 text-slate-500 mb-0.5">
+                        <Clock className="w-3 h-3 text-indigo-400" />
+                        <span className="text-[7.5px] uppercase font-bold font-mono">Tiempo ETA</span>
+                      </div>
+                      <strong className="text-xs font-mono text-white block">{activeRoute.eta}</strong>
+                    </div>
+
+                    <div className="bg-slate-950/50 p-2.5 rounded-xl border border-slate-800">
+                      <div className="flex items-center justify-center gap-1 text-slate-500 mb-0.5">
+                        <Compass className="w-3 h-3 text-indigo-400" />
+                        <span className="text-[7.5px] uppercase font-bold font-mono">Km Pendientes</span>
+                      </div>
+                      <strong className="text-xs font-mono text-white block">{activeRoute.kmRestantes}</strong>
+                    </div>
+
+                    <div className="bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-900/40 flex flex-col items-center justify-center">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mb-1"></span>
+                      <strong className="text-[9px] uppercase tracking-wider text-emerald-300 font-black font-mono">NOM-012 OK</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 6. VOICE AI COPILOTO OVERLAY MESSAGES (RENDERED IN-LINE IN DETAILED LAYOUT) */}
+                {copilotoMensaje && (
+                  <div className="bg-slate-900 border-l-4 border-indigo-500 rounded-xl p-3 shadow-md animate-fadeIn">
+                    <div className="flex items-center justify-between pb-1 mb-1.5 border-b border-indigo-500/10">
+                      <span className="text-[8.5px] font-bold text-indigo-300 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-purple-400 animate-spin" />
+                        Copiloto Inteligente Gemini
+                      </span>
+                      <button onClick={() => setCopilotoMensaje(null)} className="text-slate-500 hover:text-white" type="button">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <p className="text-[9.5px] text-indigo-50 leading-relaxed italic">
+                      &ldquo;{copilotoMensaje}&rdquo;
+                    </p>
+                  </div>
+                )}
+
               </div>
-            )}
-
-            {/* FLOATING MIC BUTTON FOR INSTANT COPILOTO ACCESSIBILITY */}
-            <div className="absolute right-3.5 bottom-[296px] z-20 pointer-events-auto">
-              <button 
-                id="copiloto-ai-floating-btn"
-                onClick={handleMicToggle}
-                className={`p-3.5 rounded-full flex items-center justify-center shadow-2xl transition-all hover:scale-105 active:scale-95 group ${
-                  copilotoActivo 
-                    ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse shadow-red-500/40' 
-                    : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/40 ring-4 ring-indigo-500/10 animate-bounce'
-                }`}
-                title="Copiloto de Voz"
-              >
-                <div className="flex items-center gap-1.5">
-                  {copilotoActivo ? <MicOff className="w-4.5 h-4.5" /> : <Mic className="w-4.5 h-4.5" />}
-                  <span className="text-[9px] font-bold font-mono tracking-wider max-w-0 overflow-hidden group-hover:max-w-24 transition-all duration-300 whitespace-nowrap">
-                    {copilotoActivo ? "MUTE" : "HABLAR"}
-                  </span>
-                </div>
-              </button>
-            </div>
-
-            {/* 6. BOTTOM HUD STATS BAR */}
-            <div className="absolute bottom-[72px] inset-x-0 bg-slate-900 border-t border-slate-800 p-3 z-10 pointer-events-auto shadow-2xl">
-              <div className="flex flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-slate-800 text-slate-300 rounded-lg">
-                    <Clock className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="block text-[8px] text-slate-500 uppercase font-bold font-mono">Tiempo ETA</span>
-                    <strong className="text-[11px] font-mono text-white">{activeRoute.eta}</strong>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-slate-800 text-slate-300 rounded-lg">
-                    <Compass className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="block text-[8px] text-slate-500 uppercase font-bold font-mono">Km Restantes</span>
-                    <strong className="text-[11px] font-mono text-white">{activeRoute.kmRestantes}</strong>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 bg-emerald-950/80 text-emerald-300 border border-emerald-900/60 px-2.5 py-1.5 rounded-lg text-[9px] font-bold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-                  <span>NOM-012 OK</span>
-                </div>
-              </div>
-            </div>
+            ) : null}
 
           </div>
         )}
