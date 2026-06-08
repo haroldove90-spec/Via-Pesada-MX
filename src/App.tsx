@@ -350,12 +350,17 @@ export default function App() {
       }, 5000);
     } else {
       setSimulatedSpeed(0);
+      setSimulatedKmRestantes(activeRoute.kmRestantes);
+      setActiveCheckpointIndex(0);
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
     }
 
     return () => {
       if (simInterval) clearInterval(simInterval);
     };
-  }, [isEnRuta]);
+  }, [isEnRuta, activeRoute.kmRestantes, activeRoute.checkpoints]);
 
   const handleSelectRoute = (route: RutaDestino) => {
     setActiveRoute(route);
@@ -626,7 +631,7 @@ export default function App() {
                   </div>
 
                   {/* Checkpoint Instruction Box */}
-                  <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                  <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800 mb-2">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-[8px] font-black font-mono text-amber-400 uppercase tracking-wider">
                         TRAMO {activeCheckpointIndex + 1} de {activeRoute.checkpoints.length}
@@ -641,6 +646,17 @@ export default function App() {
                       {activeRoute.checkpoints[activeCheckpointIndex]?.instruccion}
                     </p>
                   </div>
+
+                  {/* HIGHLY ACCESSIBLE SECONDARY ACTION TO DELEGATE REAL-TIME NAVIGATION INTO NATIVE GOOGLE MAPS ON THE TRUCKER'S MOBILE DEVICE */}
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originCoordString)}&destination=${encodeURIComponent(activeRoute.queryParam)}&travelmode=driving`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full bg-indigo-950/90 hover:bg-indigo-900 border border-indigo-500/50 hover:border-indigo-400 py-2.5 px-3 rounded-xl text-center text-[10px] font-black tracking-wider text-indigo-300 hover:text-white uppercase flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md mb-1"
+                  >
+                    <Navigation className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
+                    <span>🗺️ GUIADO PASO A PASO EN APP ORIGINAL</span>
+                  </a>
                 </div>
               ) : (
                 /* STANDBY OVERVIEW INFO */
