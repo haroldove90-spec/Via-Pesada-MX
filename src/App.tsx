@@ -206,6 +206,7 @@ export default function App() {
   const [locationStatus, setLocationStatus] = useState<'detected' | 'failed'>('detected');
   const [navigationMode, setNavigationMode] = useState<'real' | 'simulated' | null>(null);
   const [showStartJourneyModal, setShowStartJourneyModal] = useState(false);
+  const [hideOverlays, setHideOverlays] = useState(false);
 
   const sictOptions = [
     "T3-S2 (Sencillo)",
@@ -431,7 +432,7 @@ export default function App() {
       </div>
 
       {/* FLOATING CAPA DE SEGURIDAD EXCLUSIVA: TACTICAL BADGES OVER THE MAP CONTAINER */}
-      {showRadarOverlays && (
+      {showRadarOverlays && !hideOverlays && (
         <div className="absolute inset-0 pointer-events-none z-10 w-full h-full">
           {/* Badge Alerta 1: KM 142 Zona de Asaltos */}
           <div className="absolute top-[42%] left-[45%] pointer-events-auto flex items-center gap-2 bg-red-950/95 border-2 border-red-500 rounded-2xl px-3 py-2 shadow-[0_0_15px_rgba(239,68,68,0.4)] animate-pulse hover:scale-105 transition-transform" id="radar-badge-assault">
@@ -468,6 +469,20 @@ export default function App() {
         <div className="flex items-center gap-3">
           <button 
             type="button" 
+            onClick={() => setHideOverlays(!hideOverlays)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[9px] font-mono font-bold uppercase transition-all cursor-pointer ${
+              hideOverlays 
+                ? 'bg-amber-400 text-slate-950 border-amber-300 hover:bg-amber-550' 
+                : 'bg-slate-900 text-slate-300 border-slate-800 hover:text-white hover:bg-slate-850'
+            }`}
+            title={hideOverlays ? "Mostrar controles" : "Ocultar controles para ver mapa completo"}
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span>{hideOverlays ? 'Controles Ocultos' : 'Limpiar Pantalla'}</span>
+          </button>
+
+          <button 
+            type="button" 
             onClick={() => setShowApiKeySettings(true)}
             className="p-1.5 hover:bg-slate-900 rounded-lg text-slate-400 hover:text-white transition-colors"
             title="Ajustes de Google Maps API"
@@ -475,7 +490,7 @@ export default function App() {
             <Settings className="w-4 h-4" />
           </button>
           
-          <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg text-[9px] font-mono text-slate-300 font-bold">
+          <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 px-2 py-1.5 rounded-lg text-[9px] font-mono text-slate-300 font-bold">
             <Wifi className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
             <span>5G GPS: {locationStatus === 'detected' ? 'ONLINE' : 'FALLBACK'}</span>
           </div>
@@ -491,243 +506,258 @@ export default function App() {
         {activeTab === 'mapa' && (
           <div className="absolute inset-x-0 top-0 bottom-[84px] flex flex-col justify-between p-4 pointer-events-none">
             
-            {/* TOP LAYOUT BAR: DESTINATIONS SEARCH & CONTROL RADAR */}
-            <div className="w-full flex flex-col gap-2.5 max-w-sm mx-auto pointer-events-auto">
-              
-              {/* DROPDOWN DESTINATION SEARCH */}
-              <div className="relative">
-                <div className="flex items-center bg-slate-950/95 border-2 border-indigo-500/40 rounded-2xl px-3.5 py-3 shadow-2xl backdrop-blur">
-                  <Search className="w-4.5 h-4.5 text-slate-400 mr-2 shrink-0 animate-pulse" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => handleManualSearch(e.target.value)}
-                    onFocus={() => setIsDropdownOpen(true)}
-                    placeholder="Buscar autopistas federales o destino..."
-                    className="w-full bg-transparent text-white text-xs placeholder-slate-500 font-sans outline-none font-black"
-                  />
-                  {searchQuery && (
-                    <button 
-                      onClick={() => {
-                        setSearchQuery('');
-                        setActiveRoute(DESTINOS[0]);
-                      }} 
-                      className="p-1 hover:bg-slate-900 rounded text-slate-400"
-                      type="button"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Drop-down suggest */}
-                {isDropdownOpen && (
-                  <div className="absolute top-14 inset-x-0 bg-slate-950/95 border border-slate-800 rounded-2xl shadow-3xl p-1.5 z-40 max-h-56 overflow-y-auto backdrop-blur-md">
-                    <div className="text-[8px] text-slate-500 font-black px-2.5 py-1.5 uppercase tracking-wider font-mono">Seleccionar Destino Regulado</div>
-                    {DESTINOS.filter(d => d.nombre.toLowerCase().includes(searchQuery.toLowerCase())).map((dest) => (
-                      <button
-                        key={dest.id}
-                        onClick={() => handleSelectRoute(dest)}
-                        className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-indigo-900/40 rounded-xl text-left transition-colors text-xs text-slate-200"
-                        type="button"
-                      >
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
-                          <div>
-                            <span className="font-extrabold text-white block text-xs">{dest.nombre}</span>
-                            <span className="text-[9px] text-slate-400 font-mono text-indigo-400">{dest.rutaFormato}</span>
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-mono font-black text-amber-400">{dest.kmRestantes} km</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* FLOATING ACTION CAPA: REGLAMENTO & RADAR TOGGLE */}
-              <div className="flex gap-1.5 items-stretch">
-                <div className="flex bg-slate-950/95 border border-slate-800 p-1 rounded-xl shadow-xl flex-1 text-[9px] font-bold font-mono">
-                  <span className="text-slate-500 px-2 py-1 block self-center">Radar NOM:</span>
-                  <button
-                    type="button"
-                    onClick={() => setShowRadarOverlays(!showRadarOverlays)}
-                    className={`flex-1 py-1 rounded-lg text-center transition-all ${
-                      showRadarOverlays 
-                        ? 'bg-amber-400 text-slate-950 font-black shadow-sm' 
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {showRadarOverlays ? '🎯 ACTIVO' : '💤 INACTIVO'}
-                  </button>
-                </div>
-
-                {/* SOUND MUTED TOGGLE */}
+            {hideOverlays ? (
+              <div className="absolute inset-x-0 bottom-4 flex justify-center pointer-events-auto z-10 p-4">
                 <button
                   type="button"
-                  onClick={() => setIsMuted(!isMuted)}
-                  className={`bg-slate-950/95 border border-slate-800 px-3.5 rounded-xl shadow-xl text-xs transition-colors flex items-center justify-center gap-1.5 ${
-                    isMuted ? 'text-red-400 hover:text-red-300' : 'text-slate-300 hover:text-white'
-                  }`}
-                  title={isMuted ? "Activar locutor nacional" : "Silenciar copiloto"}
+                  onClick={() => setHideOverlays(false)}
+                  className="bg-slate-950/98 text-amber-400 hover:text-white border-2 border-amber-400/80 hover:border-amber-400 px-6 py-3.5 rounded-full font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-2xl animate-bounce hover:scale-105 active:scale-95 transition-all cursor-pointer"
                 >
-                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                  <span className="text-[9px] font-bold font-mono uppercase">{isMuted ? 'Voz Muted' : 'Voz On'}</span>
+                  <Eye className="w-4 h-4 text-amber-400 animate-pulse" />
+                  <span>👁️ MOSTRAR CONTROLES</span>
                 </button>
               </div>
-            </div>
-
-            {/* UPPER-MID: FLOATING COPILOTO SPEECH SENTENCE BOX */}
-            {copilotoMensaje && (
-              <div className="w-full max-w-sm mx-auto mt-4 pointer-events-auto">
-                <div className="bg-slate-950/95 border-l-4 border-amber-400 rounded-2xl p-3 shadow-2xl backdrop-blur relative">
-                  <button 
-                    onClick={() => setCopilotoMensaje(null)} 
-                    className="absolute top-2.5 right-2.5 text-slate-500 hover:text-white p-0.5 bg-slate-900 rounded-md"
-                    type="button"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-                    <span className="text-[8.5px] font-black text-slate-400 font-mono tracking-widest uppercase">COPILOTO GEMINI EN AUDIO</span>
-                  </div>
-                  <p className="text-[10px] text-indigo-50 font-extrabold italic leading-relaxed">
-                    &ldquo;{copilotoMensaje}&rdquo;
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* LOWER PORTION: TELEMETRY & FLIGHT NAVIGATION HUD DE MONITOREO */}
-            <div className="w-full flex flex-col gap-2 max-w-sm mx-auto mt-auto pointer-events-auto">
-              
-              {/* DRIVING SIMULATOR CONDUCCIÓN ACTIVA */}
-              {isEnRuta ? (
-                <div className={`bg-slate-950/98 border-2 ${navigationMode === 'real' ? 'border-emerald-500 shadow-emerald-500/10' : 'border-amber-400 shadow-amber-500/10'} rounded-2xl p-3 shadow-2xl backdrop-blur animate-slideUp`}>
-                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${navigationMode === 'real' ? 'bg-emerald-400 animate-ping' : 'bg-amber-500 animate-ping'} shrink-0`} />
-                      <span className={`text-[9px] font-black font-mono tracking-wider ${navigationMode === 'real' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                        {navigationMode === 'real' ? '🔴 CARRETERA REAL GPS' : '🤖 MONITOREO SIMULADO'}
-                      </span>
-                    </div>
-                    <span className="text-[8px] bg-slate-900 text-slate-300 font-mono px-2 py-0.5 rounded border border-slate-850">
-                      {navigationMode === 'real' ? 'Satélite Activo' : 'Modo Demo'}
-                    </span>
-                  </div>
-
-                  {/* Telemetría Grid */}
-                  <div className="grid grid-cols-3 gap-2 mb-2">
-                    <div className="bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 flex flex-col items-center">
-                      <span className="text-[7.5px] text-slate-500 font-mono font-bold uppercase">Velocidad</span>
-                      <div className="flex items-baseline gap-0.5 mt-0.5">
-                        <span className={`text-base font-black font-mono ${navigationMode === 'real' ? 'text-emerald-400' : 'text-amber-400'}`}>{simulatedSpeed}</span>
-                        <span className="text-[8px] text-slate-500 font-bold">km/h</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 flex flex-col items-center">
-                      <span className="text-[7.5px] text-slate-500 font-mono font-bold uppercase">Distancia</span>
-                      <div className="flex items-baseline gap-0.5 mt-0.5">
-                        <span className="text-base font-black font-mono text-indigo-300">
-                          {navigationMode === 'real' ? 'Real' : `${simulatedKmRestantes} km`}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 flex flex-col items-center">
-                      <span className="text-[7.5px] text-slate-500 font-mono font-bold uppercase">Límite NOM</span>
-                      <div className="flex items-baseline gap-0.5 mt-0.5">
-                        <span className="text-base font-black font-mono text-amber-400">{truckProfile.alturaMaxima}</span>
-                        <span className="text-[8px] text-slate-500 font-bold">m</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Checkpoint Instruction Box */}
-                  <div className="bg-slate-900 p-2 rounded-xl border border-slate-800 mb-2">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[8px] font-black font-mono text-amber-400 uppercase tracking-wider">
-                        {navigationMode === 'real' ? 'Indicación de Viaje' : `TRAMO ${activeCheckpointIndex + 1} de ${activeRoute.checkpoints.length}`}
-                      </span>
-                      {activeRoute.checkpoints[activeCheckpointIndex]?.alertaNom && (
-                        <span className="text-[7px] font-bold bg-red-950 text-red-500 border border-red-900 px-1.5 py-0.2 rounded uppercase">
-                          ⚠️ NOM-012
-                        </span>
+            ) : (
+              <>
+                {/* TOP LAYOUT BAR: DESTINATIONS SEARCH & CONTROL RADAR */}
+                <div className="w-full flex flex-col gap-2.5 max-w-sm mx-auto pointer-events-auto">
+                  
+                  {/* DROPDOWN DESTINATION SEARCH */}
+                  <div className="relative">
+                    <div className="flex items-center bg-slate-950/95 border-2 border-indigo-500/40 rounded-2xl px-3.5 py-3 shadow-2xl backdrop-blur">
+                      <Search className="w-4.5 h-4.5 text-slate-400 mr-2 shrink-0 animate-pulse" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => handleManualSearch(e.target.value)}
+                        onFocus={() => setIsDropdownOpen(true)}
+                        placeholder="Buscar autopistas federales o destino..."
+                        className="w-full bg-transparent text-white text-xs placeholder-slate-500 font-sans outline-none font-black"
+                      />
+                      {searchQuery && (
+                        <button 
+                          onClick={() => {
+                            setSearchQuery('');
+                            setActiveRoute(DESTINOS[0]);
+                          }} 
+                          className="p-1 hover:bg-slate-900 rounded text-slate-400"
+                          type="button"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       )}
                     </div>
-                    <p className="text-[9px] text-white leading-normal filter font-medium">
-                      {navigationMode === 'real' 
-                        ? `GPS conectado. Guiando tractocamión hacia de ${activeRoute.rutaFormato.split("➔")[1]} de forma segura.` 
-                        : activeRoute.checkpoints[activeCheckpointIndex]?.instruccion}
-                    </p>
+
+                    {/* Drop-down suggest */}
+                    {isDropdownOpen && (
+                      <div className="absolute top-14 inset-x-0 bg-slate-950/95 border border-slate-800 rounded-2xl shadow-3xl p-1.5 z-40 max-h-56 overflow-y-auto backdrop-blur-md">
+                        <div className="text-[8px] text-slate-500 font-black px-2.5 py-1.5 uppercase tracking-wider font-mono">Seleccionar Destino Regulado</div>
+                        {DESTINOS.filter(d => d.nombre.toLowerCase().includes(searchQuery.toLowerCase())).map((dest) => (
+                          <button
+                            key={dest.id}
+                            onClick={() => handleSelectRoute(dest)}
+                            className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-indigo-900/40 rounded-xl text-left transition-colors text-xs text-slate-200"
+                            type="button"
+                          >
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
+                              <div>
+                                <span className="font-extrabold text-white block text-xs">{dest.nombre}</span>
+                                <span className="text-[9px] text-slate-400 font-mono text-indigo-400">{dest.rutaFormato}</span>
+                              </div>
+                            </div>
+                            <span className="text-[10px] font-mono font-black text-amber-400">{dest.kmRestantes} km</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  {/* HIGHLY ACCESSIBLE SECONDARY ACTION TO DELEGATE REAL-TIME NAVIGATION INTO NATIVE GOOGLE MAPS ON THE TRUCKER'S MOBILE DEVICE */}
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originCoordString)}&destination=${encodeURIComponent(activeRoute.queryParam)}&travelmode=driving`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full bg-indigo-950/85 hover:bg-indigo-900 border border-indigo-500/40 py-2 px-3 rounded-xl text-center text-[9px] font-black tracking-wider text-indigo-300 hover:text-white uppercase flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md mb-2"
-                  >
-                    <Navigation className="w-3 h-3 text-indigo-400 animate-pulse" />
-                    <span>🗺️ ABRIR INDICACIONES EN GOOGLE MAPS</span>
-                  </a>
+                  {/* FLOATING ACTION CAPA: REGLAMENTO & RADAR TOGGLE */}
+                  <div className="flex gap-1.5 items-stretch">
+                    <div className="flex bg-slate-950/95 border border-slate-800 p-1 rounded-xl shadow-xl flex-1 text-[9px] font-bold font-mono">
+                      <span className="text-slate-500 px-2 py-1 block self-center">Radar NOM:</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowRadarOverlays(!showRadarOverlays)}
+                        className={`flex-1 py-1 rounded-lg text-center transition-all ${
+                          showRadarOverlays 
+                            ? 'bg-amber-400 text-slate-950 font-black shadow-sm' 
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {showRadarOverlays ? '🎯 ACTIVO' : '💤 INACTIVO'}
+                      </button>
+                    </div>
+
+                    {/* SOUND MUTED TOGGLE */}
+                    <button
+                      type="button"
+                      onClick={() => setIsMuted(!isMuted)}
+                      className={`bg-slate-950/95 border border-slate-800 px-3.5 rounded-xl shadow-xl text-xs transition-colors flex items-center justify-center gap-1.5 ${
+                        isMuted ? 'text-red-400 hover:text-red-300' : 'text-slate-300 hover:text-white'
+                      }`}
+                      title={isMuted ? "Activar locutor nacional" : "Silenciar copiloto"}
+                    >
+                      {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                      <span className="text-[9px] font-bold font-mono uppercase">{isMuted ? 'Voz Muted' : 'Voz On'}</span>
+                    </button>
+                  </div>
                 </div>
-              ) : (
-                /* STANDBY OVERVIEW INFO */
-                <div className="bg-slate-950/95 border border-slate-800 rounded-2xl p-3 shadow-2xl backdrop-blur">
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="flex items-center gap-1 text-[8px] text-slate-400 font-mono">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <span>GPS Activo: {locationStatus === 'detected' ? 'Ubicación Detectada' : 'Tlalnepantla CEDIS'}</span>
+
+                {/* UPPER-MID: FLOATING COPILOTO SPEECH SENTENCE BOX */}
+                {copilotoMensaje && (
+                  <div className="w-full max-w-sm mx-auto mt-4 pointer-events-auto">
+                    <div className="bg-slate-950/95 border-l-4 border-amber-400 rounded-2xl p-3 shadow-2xl backdrop-blur relative">
+                      <button 
+                        onClick={() => setCopilotoMensaje(null)} 
+                        className="absolute top-2.5 right-2.5 text-slate-500 hover:text-white p-0.5 bg-slate-900 rounded-md"
+                        type="button"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+                        <span className="text-[8.5px] font-black text-slate-400 font-mono tracking-widest uppercase">COPILOTO GEMINI EN AUDIO</span>
+                      </div>
+                      <p className="text-[10px] text-indigo-50 font-extrabold italic leading-relaxed">
+                        &ldquo;{copilotoMensaje}&rdquo;
+                      </p>
                     </div>
-                    <span className="text-amber-400 text-[8px] text-right font-mono font-bold">{truckProfile.configuracionSict.split(" ")[0]} ({truckProfile.pesoBruto} Ton)</span>
                   </div>
+                )}
+
+                {/* LOWER PORTION: TELEMETRY & FLIGHT NAVIGATION HUD DE MONITOREO */}
+                <div className="w-full flex flex-col gap-2 max-w-sm mx-auto mt-auto pointer-events-auto">
                   
-                  <div className="h-px w-full bg-slate-900 my-1.5" />
+                  {/* DRIVING SIMULATOR CONDUCCIÓN ACTIVA */}
+                  {isEnRuta ? (
+                    <div className={`bg-slate-950/98 border-2 ${navigationMode === 'real' ? 'border-emerald-500 shadow-emerald-500/10' : 'border-amber-400 shadow-amber-500/10'} rounded-2xl p-3 shadow-2xl backdrop-blur animate-slideUp`}>
+                      <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2.5 h-2.5 rounded-full ${navigationMode === 'real' ? 'bg-emerald-400 animate-ping' : 'bg-amber-500 animate-ping'} shrink-0`} />
+                          <span className={`text-[9px] font-black font-mono tracking-wider ${navigationMode === 'real' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                            {navigationMode === 'real' ? '🔴 CARRETERA REAL GPS' : '🤖 MONITOREO SIMULADO'}
+                          </span>
+                        </div>
+                        <span className="text-[8px] bg-slate-900 text-slate-300 font-mono px-2 py-0.5 rounded border border-slate-850">
+                          {navigationMode === 'real' ? 'Satélite Activo' : 'Modo Demo'}
+                        </span>
+                      </div>
 
-                  <div className="flex justify-between items-center gap-2">
-                    <div className="flex-1">
-                      <span className="text-[11px] font-black text-white block truncate">
-                        CDMX/N. Laredo ➔ {activeRoute.rutaFormato.split("➔")[1]}
-                      </span>
-                      <span className="text-[8px] text-slate-400 font-mono">Duración Estimada: {activeRoute.eta}</span>
+                      {/* Telemetría Grid */}
+                      <div className="grid grid-cols-3 gap-2 mb-2">
+                        <div className="bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 flex flex-col items-center">
+                          <span className="text-[7.5px] text-slate-500 font-mono font-bold uppercase">Velocidad</span>
+                          <div className="flex items-baseline gap-0.5 mt-0.5">
+                            <span className={`text-base font-black font-mono ${navigationMode === 'real' ? 'text-emerald-400' : 'text-amber-400'}`}>{simulatedSpeed}</span>
+                            <span className="text-[8px] text-slate-500 font-bold">km/h</span>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 flex flex-col items-center">
+                          <span className="text-[7.5px] text-slate-500 font-mono font-bold uppercase">Distancia</span>
+                          <div className="flex items-baseline gap-0.5 mt-0.5">
+                            <span className="text-base font-black font-mono text-indigo-300">
+                              {navigationMode === 'real' ? 'Real' : `${simulatedKmRestantes} km`}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 flex flex-col items-center">
+                          <span className="text-[7.5px] text-slate-500 font-mono font-bold uppercase">Límite NOM</span>
+                          <div className="flex items-baseline gap-0.5 mt-0.5">
+                            <span className="text-base font-black font-mono text-amber-400">{truckProfile.alturaMaxima}</span>
+                            <span className="text-[8px] text-slate-500 font-bold">m</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Checkpoint Instruction Box */}
+                      <div className="bg-slate-900 p-2 rounded-xl border border-slate-800 mb-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[8px] font-black font-mono text-amber-400 uppercase tracking-wider">
+                            {navigationMode === 'real' ? 'Indicación de Viaje' : `TRAMO ${activeCheckpointIndex + 1} de ${activeRoute.checkpoints.length}`}
+                          </span>
+                          {activeRoute.checkpoints[activeCheckpointIndex]?.alertaNom && (
+                            <span className="text-[7px] font-bold bg-red-950 text-red-500 border border-red-900 px-1.5 py-0.2 rounded uppercase">
+                              ⚠️ NOM-012
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[9px] text-white leading-normal filter font-medium">
+                          {navigationMode === 'real' 
+                            ? `GPS conectado. Guiando tractocamión hacia de ${activeRoute.rutaFormato.split("➔")[1]} de forma segura.` 
+                            : activeRoute.checkpoints[activeCheckpointIndex]?.instruccion}
+                        </p>
+                      </div>
+
+                      {/* HIGHLY ACCESSIBLE SECONDARY ACTION TO DELEGATE REAL-TIME NAVIGATION INTO NATIVE GOOGLE MAPS ON THE TRUCKER'S MOBILE DEVICE */}
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originCoordString)}&destination=${encodeURIComponent(activeRoute.queryParam)}&travelmode=driving`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full bg-indigo-950/85 hover:bg-indigo-900 border border-indigo-500/40 py-2 px-3 rounded-xl text-center text-[9px] font-black tracking-wider text-indigo-300 hover:text-white uppercase flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md mb-2"
+                      >
+                        <Navigation className="w-3 h-3 text-indigo-400 animate-pulse" />
+                        <span>🗺️ ABRIR INDICACIONES EN GOOGLE MAPS</span>
+                      </a>
                     </div>
+                  ) : (
+                    /* STANDBY OVERVIEW INFO */
+                    <div className="bg-slate-950/95 border border-slate-800 rounded-2xl p-3 shadow-2xl backdrop-blur">
+                      <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-1 text-[8px] text-slate-400 font-mono">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>GPS Activo: {locationStatus === 'detected' ? 'Ubicación Detectada' : 'Tlalnepantla CEDIS'}</span>
+                        </div>
+                        <span className="text-amber-400 text-[8px] text-right font-mono font-bold">{truckProfile.configuracionSict.split(" ")[0]} ({truckProfile.pesoBruto} Ton)</span>
+                      </div>
+                      
+                      <div className="h-px w-full bg-slate-900 my-1.5" />
 
-                    <div className="flex gap-2">
-                      <div className="text-right">
-                        <span className="text-xs font-mono font-black text-amber-400 block">{activeRoute.casetas}</span>
-                        <span className="text-[7px] text-slate-500 font-mono block">PEAJES SUGERIDOS</span>
+                      <div className="flex justify-between items-center gap-2">
+                        <div className="flex-1">
+                          <span className="text-[11px] font-black text-white block truncate">
+                            CDMX/N. Laredo ➔ {activeRoute.rutaFormato.split("➔")[1]}
+                          </span>
+                          <span className="text-[8px] text-slate-400 font-mono">Duración Estimada: {activeRoute.eta}</span>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <div className="text-right">
+                            <span className="text-xs font-mono font-black text-amber-400 block">{activeRoute.casetas}</span>
+                            <span className="text-[7px] text-slate-500 font-mono block">PEAJES SUGERIDOS</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* GIGANTIC ERGONOMIC MONITOREAR RUTA IN LIVE BUTTON */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isEnRuta) {
+                        setIsEnRuta(false);
+                        setNavigationMode(null);
+                      } else {
+                        setShowStartJourneyModal(true);
+                      }
+                    }}
+                    className={`w-full py-3.5 px-6 rounded-2xl border-2 font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-3xl transition-all duration-300 transform active:scale-95 cursor-pointer ${
+                      isEnRuta
+                        ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-500/50 animate-pulse shadow-rose-900/30'
+                        : 'bg-amber-400 hover:bg-amber-500 text-slate-950 border-amber-300/65 shadow-amber-500/20'
+                    }`}
+                  >
+                    <Compass className={`w-4 h-4 ${isEnRuta ? 'animate-spin' : ''}`} />
+                    <span>{isEnRuta ? '🚨 DETENER NAVEGACIÓN EN CURSO' : '🟢 INICIAR VIAJE'}</span>
+                  </button>
+
                 </div>
-              )}
-
-              {/* GIGANTIC ERGONOMIC MONITOREAR RUTA IN LIVE BUTTON */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (isEnRuta) {
-                    setIsEnRuta(false);
-                    setNavigationMode(null);
-                  } else {
-                    setShowStartJourneyModal(true);
-                  }
-                }}
-                className={`w-full py-3.5 px-6 rounded-2xl border-2 font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-3xl transition-all duration-300 transform active:scale-95 cursor-pointer ${
-                  isEnRuta
-                    ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-500/50 animate-pulse shadow-rose-900/30'
-                    : 'bg-amber-400 hover:bg-amber-500 text-slate-950 border-amber-300/65 shadow-amber-500/20'
-                }`}
-              >
-                <Compass className={`w-4 h-4 ${isEnRuta ? 'animate-spin' : ''}`} />
-                <span>{isEnRuta ? '🚨 DETENER NAVEGACIÓN EN CURSO' : '🟢 INICIAR VIAJE'}</span>
-              </button>
-
-            </div>
+              </>
+            )}
 
           </div>
         )}
